@@ -1416,34 +1416,34 @@
         }
         
         // =================== UI UPDATES ===================
-        function showSymbolData(symbol) {
-            const data = symbol === 'ALL' ? aggregateAllData() : allData[symbol];
-            
-            if (!data) {
-                logDebug(`No data for symbol: ${symbol}`, 'warning');
-                document.getElementById('chartTitle').innerHTML = 
-                    '<i class="fas fa-chart-candlestick"></i> <span>📈 NO DATA AVAILABLE</span>';
-                return;
-            }
-            
-            // Update stats
-            updateStats(data);
-            
-            // Update trades list
-            updateTradesList(data.trades || []);
-            
-            // Update timestamp
-            if (data.timestamp) {
-                const date = new Date(data.timestamp * 1000);
-                document.getElementById('lastUpdate').textContent = 
-                    date.toLocaleTimeString('id-ID', { hour12: false });
-            }
-            
-            // Update chart if not ALL
-            if (symbol !== 'ALL') {
-                updateChartForSymbol(symbol, data);
-            }
-        }
+    function showSymbolData(symbol) {
+    const data = symbol === 'ALL' ? aggregateAllData() : allData[symbol];
+    
+    if (!data) {
+        logDebug(`No data for symbol: ${symbol}`, 'warning');
+        document.getElementById('chartTitle').innerHTML = 
+            '<i class="fas fa-chart-candlestick"></i> <span>📈 NO DATA AVAILABLE</span>';
+        return;
+    }
+    
+    // Update stats
+    updateStats(data);
+    
+    // Update trades list
+    updateTradesList(data.trades || []);
+    
+    // Update timestamp
+    if (data.timestamp) {
+        const date = new Date(data.timestamp * 1000);
+        document.getElementById('lastUpdate').textContent = 
+            date.toLocaleTimeString('id-ID', { hour12: false });
+    }
+    
+    // Update chart if not ALL
+    if (symbol !== 'ALL') {
+        updateChartForSymbol(symbol, data);
+    }
+}
         
         function updateStats(data) {
             const equity = parseFloat(data.equity) || 0;

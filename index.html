@@ -1583,61 +1583,80 @@
         }
         
         // =================== TRADES LIST ===================
-        function updateTradesList(trades) {
-            const list = document.getElementById('tradesList');
+function updateTradesList(trades) {
+    const list = document.getElementById('tradesList');
+    
+    // Ensure trades is an array
+    if (!trades || !Array.isArray(trades)) {
+        console.warn('Trades is not an array:', trades);
+        trades = [];
+    }
+    
+    if (trades.length === 0) {
+        list.innerHTML = `
+            <div class="no-trades">
+                <i class="fas fa-box-open" style="font-size: 24px; margin-bottom: 10px;"></i><br>
+                No active trades found
+            </div>
+        `;
+        document.getElementById('tradeCount').textContent = '(0 trades)';
+        return;
+    }
+    
+    try {
+        // Sort by profit (highest first)
+        trades.sort((a, b) => {
+            const profitA = parseFloat(a.profit_usd || a.profit || 0);
+            const profitB = parseFloat(b.profit_usd || b.profit || 0);
+            return profitB - profitA;
+        });
+        
+        // Update count
+        document.getElementById('tradeCount').textContent = `(${trades.length} trades)`;
+        
+        // Clear and rebuild list
+        list.innerHTML = '';
+        
+        trades.forEach(trade => {
+            const profitUsd = parseFloat(trade.profit_usd || trade.profit || 0);
+            const profitPips = parseFloat(trade.profit_pips || 0);
+            const tradeType = (trade.type || 'BUY').toUpperCase();
+            const profitClass = profitUsd >= 0 ? 'positive' : 'negative';
+            const typeClass = tradeType.toLowerCase();
             
-            if (!trades || trades.length === 0) {
-                list.innerHTML = `
-                    <div class="no-trades">
-                        <i class="fas fa-box-open" style="font-size: 24px; margin-bottom: 10px;"></i><br>
-                        No active trades found
+            const item = document.createElement('div');
+            item.className = `trade-item ${typeClass}`;
+            item.innerHTML = `
+                <div class="trade-type ${typeClass}">${tradeType}</div>
+                <div class="trade-details">
+                    <div class="main">#${trade.ticket || 'N/A'} | ${trade.lots || '0'} lots | ${trade.symbol || currentSymbol}</div>
+                    <div class="sub">
+                        <span>Entry: ${trade.open_price || '─'}</span>
+                        <span>Current: ${trade.current_price || '─'}</span>
+                        <span>SL: ${trade.sl || '─'}</span>
+                        <span>TP: ${trade.tp || '─'}</span>
                     </div>
-                `;
-                document.getElementById('tradeCount').textContent = '(0 trades)';
-                return;
-            }
-            
-            // Sort by profit (highest first)
-            trades.sort((a, b) => {
-                const profitA = a.profit_usd || a.profit || 0;
-                const profitB = b.profit_usd || b.profit || 0;
-                return profitB - profitA;
-            });
-            
-            // Update count
-            document.getElementById('tradeCount').textContent = `(${trades.length} trades)`;
-            
-            // Clear and rebuild list
-            list.innerHTML = '';
-            
-            trades.forEach(trade => {
-                const profitUsd = trade.profit_usd || trade.profit || 0;
-                const profitPips = trade.profit_pips || 0;
-                const tradeType = trade.type || 'BUY';
-                const profitClass = profitUsd >= 0 ? 'positive' : 'negative';
-                const typeClass = tradeType.toLowerCase();
-                
-                const item = document.createElement('div');
-                item.className = `trade-item ${typeClass}`;
-                item.innerHTML = `
-                    <div class="trade-type ${typeClass}">${tradeType}</div>
-                    <div class="trade-details">
-                        <div class="main">#${trade.ticket || 'N/A'} | ${trade.lots || '0'} lots | ${trade.symbol || currentSymbol}</div>
-                        <div class="sub">
-                            <span>Entry: ${trade.open_price || '─'}</span>
-                            <span>Current: ${trade.current_price || '─'}</span>
-                            <span>SL: ${trade.sl || '─'}</span>
-                            <span>TP: ${trade.tp || '─'}</span>
-                        </div>
-                    </div>
-                    <div class="trade-profit ${profitClass}">
-                        <div class="pips">${profitPips >= 0 ? '+' : ''}${profitPips.toFixed(1)} pips</div>
-                        <div class="usd">${profitUsd >= 0 ? '+' : ''}$${Math.abs(profitUsd).toFixed(2)}</div>
-                    </div>
-                `;
-                list.appendChild(item);
-            });
-        }
+                </div>
+                <div class="trade-profit ${profitClass}">
+                    <div class="pips">${profitPips >= 0 ? '+' : ''}${profitPips.toFixed(1)} pips</div>
+                    <div class="usd">${profitUsd >= 0 ? '+' : ''}$${Math.abs(profitUsd).toFixed(2)}</div>
+                </div>
+            `;
+            list.appendChild(item);
+        });
+        
+    } catch (error) {
+        console.error('Error updating trades list:', error);
+        list.innerHTML = `
+            <div class="no-trades">
+                <i class="fas fa-exclamation-triangle" style="color: #f59e0b; font-size: 24px; margin-bottom: 10px;"></i><br>
+                Error loading trades<br>
+                <small style="color: #8b92b0;">${error.message}</small>
+            </div>
+        `;
+        document.getElementById('tradeCount').textContent = '(error)';
+    }
+}
         
         // =================== CONNECTION STATUS ===================
         function updateConnectionStatus(connected, errorMsg = '') {

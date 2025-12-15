@@ -8,9 +8,6 @@
     <!-- Trading Charts -->
     <script src="https://cdn.jsdelivr.net/npm/lightweight-charts@4.1.0/dist/lightweight-charts.standalone.production.js"></script>
     
-    <!-- Socket.IO for WebSocket -->
-    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
-    
     <!-- Font Awesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
@@ -554,32 +551,6 @@
             background: rgba(255, 255, 255, 0.1);
         }
         
-        /* =================== WEBSOCKET STATUS =================== */
-        .ws-status {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 12px;
-            padding: 4px 12px;
-            border-radius: 20px;
-            background: rgba(102, 126, 234, 0.1);
-        }
-        
-        .ws-status.online {
-            color: #10b981;
-            background: rgba(16, 185, 129, 0.1);
-        }
-        
-        .ws-status.offline {
-            color: #ef4444;
-            background: rgba(239, 68, 68, 0.1);
-        }
-        
-        .ws-status.connecting {
-            color: #f59e0b;
-            background: rgba(245, 158, 11, 0.1);
-        }
-        
         /* =================== LOADING OVERLAY =================== */
         .loading-overlay {
             position: fixed;
@@ -727,28 +698,6 @@
         .price-down {
             animation: priceDown 1s ease;
         }
-        
-        /* =================== TOOLTIPS =================== */
-        .tooltip {
-            position: relative;
-            cursor: help;
-        }
-        
-        .tooltip:hover::after {
-            content: attr(data-tooltip);
-            position: absolute;
-            bottom: 100%;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(0, 0, 0, 0.8);
-            color: white;
-            padding: 8px 12px;
-            border-radius: 6px;
-            font-size: 12px;
-            white-space: nowrap;
-            z-index: 1000;
-            margin-bottom: 5px;
-        }
     </style>
 </head>
 <body>
@@ -758,7 +707,7 @@
         <div style="color: #667eea; font-weight: 600; margin-bottom: 10px; text-align: center;">
             <div id="loadingStatus">Initializing TradingView Monitor...</div>
             <div style="font-size: 13px; color: #8b92b0; margin-top: 5px;" id="loadingSubstatus">
-                Connecting to real-time server...
+                Loading dashboard...
             </div>
         </div>
         <div class="loading-progress">
@@ -776,10 +725,6 @@
             <span class="status-badge connecting" id="statusBadge">
                 <i class="fas fa-sync-alt fa-spin"></i> CONNECTING
             </span>
-            <div class="ws-status connecting" id="wsStatus">
-                <i class="fas fa-plug"></i>
-                <span>WS: Connecting...</span>
-            </div>
         </div>
         <div style="display: flex; align-items: center; gap: 15px;">
             <div style="font-size: 13px; color: #8b92b0;">
@@ -797,7 +742,7 @@
             <strong style="color: #ef4444;"><i class="fas fa-bug"></i> DEBUG CONSOLE</strong>
             <div style="display: flex; gap: 10px; align-items: center;">
                 <span style="font-size: 11px; color: #8b92b0;" id="debugStats">
-                    Clients: 0 | Memory: --
+                    Memory: --
                 </span>
                 <button class="debug-close" id="debugClose"><i class="fas fa-times"></i></button>
             </div>
@@ -899,7 +844,7 @@
         <div class="chart-header">
             <div class="chart-title" id="chartTitle">
                 <i class="fas fa-chart-candlestick"></i>
-                <span>📈 LIVE CHART - Real-time WebSocket Streaming</span>
+                <span>📈 LIVE CHART - Real-time Market Data</span>
             </div>
             
             <div class="chart-controls">
@@ -947,8 +892,8 @@
                     <span class="market-info-value" id="timeframeValue">M1</span>
                 </div>
                 <div class="market-info-item">
-                    <span class="market-info-label">Latency</span>
-                    <span class="market-info-value" id="latencyValue">-- ms</span>
+                    <span class="market-info-label">Update</span>
+                    <span class="market-info-value" id="updateTimer">5s</span>
                 </div>
             </div>
         </div>
@@ -970,8 +915,8 @@
                     Auto-refresh: <span id="refreshTimer">5s</span>
                 </div>
                 <div style="font-size: 12px; color: #8b92b0; display: flex; align-items: center; gap: 5px;">
-                    <i class="fas fa-signal"></i>
-                    <span id="updateRate">0 msgs/sec</span>
+                    <i class="fas fa-database"></i>
+                    <span id="dataStatus">No data</span>
                 </div>
             </div>
         </div>
@@ -1000,13 +945,13 @@
                 Ping: <span id="pingTime">-- ms</span>
             </div>
             <div>
-                <i class="fas fa-wifi" style="color: #8b92b0;"></i>
-                Messages: <span id="messageCount">0</span>
+                <i class="fas fa-chart-line" style="color: #8b92b0;"></i>
+                Trades: <span id="totalTrades">0</span>
             </div>
         </div>
-        <div>© 2025 BB Golden Scalper V3.6 ML Advanced - TradingView Monitor v2.0 (WebSocket)</div>
+        <div>© 2025 BB Golden Scalper V3.6 ML Advanced - TradingView Monitor v2.0</div>
         <div style="font-size: 10px; margin-top: 5px; color: #667eea;">
-            Real-time WebSocket Streaming • Auto-reconnect • Low Latency
+            Real-time Monitoring • Auto-refresh • Professional Dashboard
         </div>
     </div>
     
@@ -1029,27 +974,7 @@
         let currentChartType = 'candlestick';
         let refreshInterval = 5000;
         let refreshTimer = null;
-        
-        // WebSocket Variables
-        let socket = null;
-        let isWebSocketConnected = false;
-        let wsReconnectAttempts = 0;
-        const MAX_WS_RECONNECTS = 20;
-        let lastPriceUpdate = 0;
-        let messageCount = 0;
-        let updateRate = 0;
-        let lastMessageTime = Date.now();
-        
-        // Performance tracking
-        let performanceStats = {
-            chartUpdates: 0,
-            wsMessages: 0,
-            apiCalls: 0,
-            lastCleanup: Date.now()
-        };
-        
-        // Default symbols for WebSocket
-        const defaultSymbols = ['XAUUSD', 'EURUSD', 'GBPUSD', 'USDJPY', 'BTCUSD', 'ETHUSD'];
+        let updateCounter = 0;
         
         // =================== DEBUG SYSTEM ===================
         function logDebug(message, type = 'info') {
@@ -1072,18 +997,7 @@
                 debugPanel.removeChild(debugPanel.firstChild);
             }
             
-            // Update debug stats
-            updateDebugStats();
-            
             console.log(`[${type.toUpperCase()}] ${message}`);
-        }
-        
-        function updateDebugStats() {
-            const memory = performance.memory ? 
-                Math.round(performance.memory.usedJSHeapSize / 1024 / 1024) + 'MB' : 'N/A';
-            
-            document.getElementById('debugStats').innerHTML = 
-                `Clients: 1 | Memory: ${memory} | WS: ${isWebSocketConnected ? 'ON' : 'OFF'}`;
         }
         
         // =================== LOADING SYSTEM ===================
@@ -1100,10 +1014,10 @@
         
         // =================== INITIALIZATION ===================
         async function initApplication() {
-            updateLoadingStatus('Initializing TradingView Monitor...', 'v2.0 with WebSocket');
+            updateLoadingStatus('Initializing TradingView Monitor...', 'v2.0');
             updateLoadingProgress(10);
             
-            logDebug('🚀 Initializing TradingView Monitor v2.0 with WebSocket', 'info');
+            logDebug('🚀 Initializing TradingView Monitor v2.0', 'info');
             
             // Initialize systems step by step
             updateLoadingStatus('Setting up time display...');
@@ -1118,16 +1032,12 @@
             updateLoadingProgress(60);
             initEventListeners();
             
-            updateLoadingStatus('Connecting to WebSocket server...');
+            updateLoadingStatus('Starting data polling...');
             updateLoadingProgress(80);
-            // await initWebSocket();
+            startDataPolling();
             
-            updateLoadingStatus('Starting data services...');
-            updateLoadingProgress(90);
-            setTimeout(() => {
-                updateDashboard();
-                startAutoRefresh();
-            }, 1000);
+            updateLoadingStatus('Ready!');
+            updateLoadingProgress(100);
             
             // Hide loading overlay
             setTimeout(() => {
@@ -1136,9 +1046,7 @@
                     document.getElementById('loadingOverlay').style.display = 'none';
                     logDebug('✅ Application initialization complete', 'info');
                 }, 300);
-            }, 2000);
-            
-            updateLoadingProgress(100);
+            }, 1500);
         }
         
         function initTimeDisplay() {
@@ -1183,15 +1091,7 @@
                         getTimeframeLabel(newTimeframe);
                     
                     if (currentSymbol !== 'ALL') {
-                        if (isWebSocketConnected && socket) {
-                            socket.emit('timeframe_change', {
-                                symbol: currentSymbol,
-                                timeframe: newTimeframe
-                            });
-                            logDebug(`Requested ${newTimeframe} data for ${currentSymbol} via WebSocket`, 'info');
-                        } else {
-                            updateChartTimeframe(currentSymbol, newTimeframe);
-                        }
+                        updateChartTimeframe(currentSymbol, newTimeframe);
                     }
                     
                     logDebug(`Timeframe changed to ${getTimeframeLabel(newTimeframe)}`, 'info');
@@ -1212,225 +1112,30 @@
                     logDebug(`Chart type changed to ${currentChartType}`, 'info');
                 });
             });
+        }
+        
+        // =================== DATA POLLING SYSTEM ===================
+        function startDataPolling() {
+            // Start countdown timer
+            let seconds = 5;
             
-            // Performance monitoring
-            setInterval(() => {
-                const now = Date.now();
-                updateRate = Math.round((messageCount / ((now - lastMessageTime) / 1000)) * 10) / 10;
-                document.getElementById('updateRate').textContent = `${updateRate} msgs/sec`;
-                messageCount = 0;
-                lastMessageTime = now;
+            refreshTimer = setInterval(() => {
+                seconds--;
+                document.getElementById('refreshTimer').textContent = `${seconds}s`;
+                document.getElementById('updateTimer').textContent = `${seconds}s`;
+                
+                if (seconds <= 0) {
+                    updateDashboard();
+                    seconds = 5;
+                }
             }, 1000);
-        }
-        
-        // =================== WEBSOCKET SYSTEM ===================
-        async function initWebSocket() {
-            logDebug('Initializing WebSocket connection...', 'info');
             
-            // Determine WebSocket URL based on environment
-            const isLocalhost = window.location.hostname === 'localhost' || 
-                              window.location.hostname === '127.0.0.1';
+            // Initial load
+            setTimeout(() => {
+                updateDashboard();
+            }, 1000);
             
-            let wsUrl;
-            if (isLocalhost) {
-                wsUrl = 'ws://localhost:3001';
-            } else {
-                // Use the same domain for WebSocket (adjust if your WS server is different)
-                const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-                wsUrl = `${protocol}//${window.location.host.replace('3000', '3001')}`;
-                
-                // Fallback URL (you should change this to your actual WebSocket server)
-                const fallbackUrl = 'wss://bb-scalper-ws.onrender.com'; // Example
-                wsUrl = fallbackUrl;
-            }
-            
-            logDebug(`Connecting to WebSocket: ${wsUrl}`, 'info');
-            
-            try {
-                socket = io(wsUrl, {
-                    transports: ['websocket', 'polling'],
-                    reconnection: true,
-                    reconnectionAttempts: MAX_WS_RECONNECTS,
-                    reconnectionDelay: 1000,
-                    reconnectionDelayMax: 10000,
-                    timeout: 30000,
-                    autoConnect: true,
-                    forceNew: true
-                });
-                
-                setupWebSocketHandlers();
-                
-            } catch (error) {
-                logDebug(`WebSocket initialization failed: ${error.message}`, 'error');
-                updateWebSocketStatus(false, 'Initialization failed');
-                fallbackToPolling();
-            }
-        }
-        
-        function setupWebSocketHandlers() {
-            // Connection established
-            socket.on('connect', () => {
-                logDebug('✅ WebSocket connected successfully', 'info');
-                isWebSocketConnected = true;
-                wsReconnectAttempts = 0;
-                updateWebSocketStatus(true);
-                
-                // Subscribe to current symbol if not ALL
-                if (currentSymbol && currentSymbol !== 'ALL') {
-                    socket.emit('subscribe', {
-                        symbol: currentSymbol,
-                        timeframe: currentTimeframe
-                    });
-                    logDebug(`Subscribed to ${currentSymbol} via WebSocket`, 'info');
-                }
-                
-                // Request initial data
-                socket.emit('get_initial_data', {
-                    symbols: defaultSymbols
-                });
-            });
-            
-            // Server welcome message
-            socket.on('connected', (data) => {
-                logDebug(`Server: ${data.message}`, 'info');
-                if (data.availableSymbols) {
-                    logDebug(`Available symbols: ${data.availableSymbols.join(', ')}`, 'info');
-                }
-            });
-            
-            // Real-time price updates
-            socket.on('price_update', (data) => {
-                messageCount++;
-                performanceStats.wsMessages++;
-                
-                if (data.symbol === currentSymbol && chart) {
-                    const latency = Date.now() - data.timestamp;
-                    document.getElementById('latencyValue').textContent = `${latency} ms`;
-                    document.getElementById('latencyValue').className = 
-                        `market-info-value ${latency < 100 ? 'positive' : latency < 300 ? 'neutral' : 'negative'}`;
-                    
-                    updateLivePrice(data.price, data.timestamp);
-                }
-            });
-            
-            // Candle updates
-            socket.on('candle_update', (data) => {
-                messageCount++;
-                
-                if (data.symbol === currentSymbol && chart) {
-                    updateChartWithCandleData(data.candles, data.timeframe);
-                }
-            });
-            
-            // Market data response
-            socket.on('market_data', (data) => {
-                if (data.symbol === currentSymbol) {
-                    realMarketData[data.symbol] = realMarketData[data.symbol] || {};
-                    realMarketData[data.symbol][data.timeframe] = data.data.candles;
-                    
-                    if (chart && data.data.candles) {
-                        const series = candlestickSeries || lineSeries || areaSeries;
-                        if (series) {
-                            series.setData(data.data.candles);
-                            chart.timeScale().fitContent();
-                            chart.timeScale().scrollToPosition(-1);
-                        }
-                    }
-                }
-            });
-            
-            // Historical data response
-            socket.on('historical_data', (data) => {
-                if (data.symbol === currentSymbol && data.timeframe === currentTimeframe) {
-                    realMarketData[data.symbol] = realMarketData[data.symbol] || {};
-                    realMarketData[data.symbol][data.timeframe] = data.candles;
-                    
-                    const series = candlestickSeries || lineSeries || areaSeries;
-                    if (series && data.candles) {
-                        series.setData(data.candles);
-                        chart.timeScale().fitContent();
-                        chart.timeScale().scrollToPosition(-1);
-                    }
-                }
-            });
-            
-            // Connection error
-            socket.on('connect_error', (error) => {
-                wsReconnectAttempts++;
-                logDebug(`WebSocket connection error (attempt ${wsReconnectAttempts}/${MAX_WS_RECONNECTS}): ${error.message}`, 'warning');
-                updateWebSocketStatus(false, `Reconnecting... (${wsReconnectAttempts}/${MAX_WS_RECONNECTS})`);
-                
-                if (wsReconnectAttempts >= MAX_WS_RECONNECTS) {
-                    logDebug('Max reconnection attempts reached. Falling back to polling.', 'error');
-                    fallbackToPolling();
-                }
-            });
-            
-            // Disconnection
-            socket.on('disconnect', (reason) => {
-                logDebug(`WebSocket disconnected: ${reason}`, 'warning');
-                isWebSocketConnected = false;
-                updateWebSocketStatus(false, reason === 'io server disconnect' ? 'Server disconnected' : 'Disconnected');
-                
-                if (reason === 'io server disconnect') {
-                    // Server initiated disconnect, try to reconnect
-                    setTimeout(() => {
-                        socket.connect();
-                    }, 5000);
-                }
-            });
-        }
-        
-        function updateWebSocketStatus(connected, message = '') {
-            const wsStatusElement = document.getElementById('wsStatus');
-            
-            if (connected) {
-                wsStatusElement.innerHTML = '<i class="fas fa-check-circle"></i> <span>WS: Connected</span>';
-                wsStatusElement.className = 'ws-status online';
-            } else {
-                wsStatusElement.innerHTML = `<i class="fas fa-times-circle"></i> <span>WS: ${message || 'Disconnected'}</span>`;
-                wsStatusElement.className = 'ws-status offline';
-            }
-        }
-        
-        function subscribeToSymbol(symbol, timeframe) {
-            if (!socket || !isWebSocketConnected) return;
-            
-            socket.emit('subscribe', {
-                symbol: symbol,
-                timeframe: timeframe
-            });
-            
-            logDebug(`Subscribed to real-time data for ${symbol} (${timeframe})`, 'info');
-        }
-        
-        function unsubscribeFromSymbol() {
-            if (!socket || !isWebSocketConnected) return;
-            
-            socket.emit('unsubscribe');
-            logDebug('Unsubscribed from real-time data', 'info');
-        }
-        
-        function fallbackToPolling() {
-            logDebug('Switching to polling mode', 'warning');
-            
-            // Clear WebSocket
-            if (socket) {
-                socket.disconnect();
-                socket = null;
-            }
-            
-            isWebSocketConnected = false;
-            updateWebSocketStatus(false, 'Polling mode');
-            
-            // Start polling interval
-            setInterval(() => {
-                if (currentSymbol && currentSymbol !== 'ALL') {
-                    fetchMarketDataViaAPI(currentSymbol, currentTimeframe);
-                }
-            }, 5000);
-            
-            logDebug('Polling mode activated', 'info');
+            logDebug('Polling system started (5s interval)', 'info');
         }
         
         // =================== CHART SYSTEM ===================
@@ -1585,116 +1290,10 @@
             }
         }
         
-        // =================== LIVE PRICE UPDATES ===================
-        function updateLivePrice(price, timestamp) {
-            if (!currentSymbol || currentSymbol === 'ALL') return;
-            
-            // Update price display
-            const priceElement = document.getElementById('currentPrice');
-            const lastPrice = parseFloat(priceElement.dataset.lastPrice || price);
-            const change = price - lastPrice;
-            const changePercent = (change / lastPrice) * 100;
-            
-            priceElement.textContent = price.toFixed(5);
-            priceElement.dataset.lastPrice = price;
-            
-            // Animate price change
-            if (Math.abs(change) > 0.00001) {
-                priceElement.classList.remove('price-up', 'price-down');
-                priceElement.classList.add(change >= 0 ? 'price-up' : 'price-down');
-                
-                priceElement.style.color = change >= 0 ? '#10b981' : '#ef4444';
-                priceElement.style.fontWeight = 'bold';
-                
-                setTimeout(() => {
-                    priceElement.style.color = '#fff';
-                    priceElement.style.fontWeight = 'normal';
-                }, 1000);
-            }
-            
-            // Update bid/ask
-            const spread = getSpreadForSymbol(currentSymbol);
-            const bid = price * (1 - spread/2);
-            const ask = price * (1 + spread/2);
-            
-            document.getElementById('bidAsk').textContent = 
-                `${bid.toFixed(5)} / ${ask.toFixed(5)}`;
-            document.getElementById('spreadValue').textContent = 
-                `${(spread * 10000).toFixed(1)} pips`;
-            
-            // Update daily change
-            const changeElement = document.getElementById('dailyChange');
-            changeElement.textContent = `${changePercent >= 0 ? '+' : ''}${changePercent.toFixed(3)}%`;
-            changeElement.className = `market-info-value ${changePercent >= 0 ? 'positive' : 'negative'}`;
-            
-            // Update last candle in chart
-            updateLastCandlePrice(price, timestamp);
-            
-            // Update message count
-            document.getElementById('messageCount').textContent = 
-                parseInt(document.getElementById('messageCount').textContent || 0) + 1;
-        }
-        
-        function updateLastCandlePrice(price, timestamp) {
-            const series = candlestickSeries || lineSeries || areaSeries;
-            if (!series) return;
-            
-            const data = series.data();
-            if (data.length === 0) return;
-            
-            const lastCandle = data[data.length - 1];
-            const now = timestamp ? new Date(timestamp) : new Date();
-            const candleTime = Math.floor(now.getTime() / 1000);
-            
-            // Only update if it's the same candle (same timeframe)
-            if (Math.floor(lastCandle.time / 60) === Math.floor(candleTime / 60)) {
-                const updatedCandle = {
-                    ...lastCandle,
-                    time: lastCandle.time, // Keep original time
-                    high: Math.max(lastCandle.high, price),
-                    low: Math.min(lastCandle.low, price),
-                    close: price,
-                    volume: lastCandle.volume + Math.random() * 0.1
-                };
-                
-                series.update(updatedCandle);
-                performanceStats.chartUpdates++;
-            }
-        }
-        
-        function updateChartWithCandleData(candles, timeframe) {
-            if (timeframe !== currentTimeframe) return;
-            
-            const series = candlestickSeries || lineSeries || areaSeries;
-            if (!series) return;
-            
-            if (candles && candles.length > 0) {
-                const lastCandle = candles[candles.length - 1];
-                const currentData = series.data();
-                
-                // Update or add candle
-                if (currentData.length === 0) {
-                    series.setData(candles);
-                } else {
-                    const existingIndex = currentData.findIndex(c => c.time === lastCandle.time);
-                    if (existingIndex !== -1) {
-                        // Update existing candle
-                        series.update(lastCandle);
-                    } else {
-                        // Add new candle
-                        series.update(lastCandle);
-                    }
-                }
-                
-                // Auto-scroll to show latest data
-                chart.timeScale().scrollToPosition(-1);
-            }
-        }
-        
         // =================== DATA FETCHING ===================
         async function updateDashboard() {
-            logDebug('Fetching dashboard data...', 'info');
-            performanceStats.apiCalls++;
+            updateCounter++;
+            logDebug(`Fetching dashboard data... (Update #${updateCounter})`, 'info');
             
             try {
                 const startTime = Date.now();
@@ -1708,21 +1307,35 @@
                 }
                 
                 const data = await response.json();
-                logDebug(`Data received: ${Object.keys(data).length} symbols`, 'info');
                 
-                if (data.status === 'error' || data.status === 'no_data' || data.status === 'exception') {
+                // Check if it's error response
+                if (data.status === 'error' || data.status === 'no_data') {
+                    logDebug(`API response: ${data.message}`, 'warning');
                     updateConnectionStatus(false, data.message);
-                    logDebug(`API error: ${data.message}`, 'warning');
+                    document.getElementById('dataStatus').textContent = 'No data';
+                    document.getElementById('dataStatus').style.color = '#f59e0b';
                     return;
                 }
                 
-                allData = data;
-                updateSymbolSelector(Object.keys(data));
+                // Remove _summary from data
+                const { _summary, ...symbolsData } = data;
+                
+                allData = symbolsData;
+                const symbols = Object.keys(symbolsData);
+                
+                logDebug(`Data received: ${symbols.length} symbols, ${_summary?.total_open_trades || 0} open trades`, 'info');
+                
+                updateSymbolSelector(symbols);
+                
+                // Update data status
+                document.getElementById('dataStatus').textContent = `${symbols.length} symbols`;
+                document.getElementById('dataStatus').style.color = '#10b981';
+                document.getElementById('totalTrades').textContent = _summary?.total_open_trades || 0;
                 
                 // Auto-select symbol if needed
-                if (currentSymbol === 'ALL' && Object.keys(data).length > 0) {
-                    const symbolsWithTrades = Object.keys(data).filter(s => 
-                        data[s].open_trades > 0 || (data[s].trades && data[s].trades.length > 0)
+                if (currentSymbol === 'ALL' && symbols.length > 0) {
+                    const symbolsWithTrades = symbols.filter(s => 
+                        allData[s].open_trades > 0 || (allData[s].trades && allData[s].trades.length > 0)
                     );
                     
                     if (symbolsWithTrades.length > 0) {
@@ -1730,8 +1343,8 @@
                         if (newSymbol !== currentSymbol) {
                             switchSymbol(newSymbol);
                         }
-                    } else if (Object.keys(data).length > 0) {
-                        const newSymbol = Object.keys(data)[0];
+                    } else if (symbols.length > 0) {
+                        const newSymbol = symbols[0];
                         if (newSymbol !== currentSymbol) {
                             switchSymbol(newSymbol);
                         }
@@ -1741,43 +1354,18 @@
                 showSymbolData(currentSymbol);
                 updateConnectionStatus(true);
                 
+                // Update last update time
+                const now = new Date();
+                document.getElementById('lastUpdate').textContent = 
+                    now.toLocaleTimeString('id-ID', { hour12: false });
+                
                 logDebug('Dashboard update complete', 'info');
                 
             } catch (error) {
                 updateConnectionStatus(false, error.message);
                 logDebug(`Fetch error: ${error.message}`, 'error');
-            }
-        }
-        
-        async function fetchMarketDataViaAPI(symbol, timeframe) {
-            try {
-                const tfMap = {
-                    '1': '1m', '5': '5m', '15': '15m',
-                    '60': '1h', '240': '4h', 'D': '1d'
-                };
-                
-                const response = await fetch(
-                    `/api/market_data.js?symbol=${symbol}&timeframe=${tfMap[timeframe]}&limit=100`
-                );
-                
-                if (response.ok) {
-                    const data = await response.json();
-                    
-                    if (data && data.length > 0) {
-                        const series = candlestickSeries || lineSeries || areaSeries;
-                        if (series) {
-                            series.setData(data);
-                            chart.timeScale().fitContent();
-                            chart.timeScale().scrollToPosition(-1);
-                            
-                            // Update last price
-                            const lastCandle = data[data.length - 1];
-                            updateLivePrice(lastCandle.close, Date.now());
-                        }
-                    }
-                }
-            } catch (error) {
-                logDebug(`Polling fetch failed: ${error.message}`, 'warning');
+                document.getElementById('dataStatus').textContent = 'Error';
+                document.getElementById('dataStatus').style.color = '#ef4444';
             }
         }
         
@@ -1814,11 +1402,6 @@
         }
         
         function switchSymbol(symbol) {
-            // Unsubscribe from previous symbol
-            if (currentSymbol && currentSymbol !== 'ALL' && isWebSocketConnected) {
-                unsubscribeFromSymbol();
-            }
-            
             currentSymbol = symbol;
             
             // Update button states
@@ -1828,11 +1411,6 @@
             
             // Update UI
             showSymbolData(symbol);
-            
-            // Subscribe to new symbol via WebSocket
-            if (symbol !== 'ALL' && isWebSocketConnected) {
-                subscribeToSymbol(symbol, currentTimeframe);
-            }
             
             logDebug(`Switched to symbol: ${symbol}`, 'info');
         }
@@ -1909,18 +1487,98 @@
             
             // Update chart title
             const currentPrice = parseFloat(data.current_price) || 0;
-            const changePercent = data.daily_change || 0;
+            const changePercent = calculateDailyChange(data);
             const changeEmoji = changePercent >= 0 ? '📈' : '📉';
             
             document.getElementById('chartTitle').innerHTML = `
                 <i class="fas fa-chart-candlestick"></i>
-                <span>${changeEmoji} ${symbol} • ${getTimeframeLabel(currentTimeframe)} • $${currentPrice.toFixed(2)} 
-                <span id="liveChangeIndicator" style="color:${changePercent >= 0 ? '#10b981' : '#ef4444'}; font-size: 14px;">${changePercent >= 0 ? '+' : ''}${changePercent.toFixed(2)}%</span></span>
+                <span>${changeEmoji} ${symbol} • ${getTimeframeLabel(currentTimeframe)} • $${currentPrice.toFixed(5)} 
+                <span id="liveChangeIndicator" style="color:${changePercent >= 0 ? '#10b981' : '#ef4444'}; font-size: 14px;">${changePercent >= 0 ? '+' : ''}${changePercent.toFixed(3)}%</span></span>
             `;
             
-            // If no WebSocket, fetch initial data
-            if (!isWebSocketConnected && !realMarketData[symbol]?.[currentTimeframe]) {
-                fetchMarketDataViaAPI(symbol, currentTimeframe);
+            // Update market info
+            if (data.current_price) {
+                document.getElementById('currentPrice').textContent = currentPrice.toFixed(5);
+                
+                if (data.bid_price && data.ask_price) {
+                    document.getElementById('bidAsk').textContent = 
+                        `${parseFloat(data.bid_price).toFixed(5)} / ${parseFloat(data.ask_price).toFixed(5)}`;
+                } else {
+                    // Estimate bid/ask from current price
+                    const spread = data.spread || 10;
+                    const bid = currentPrice - (spread * 0.00001);
+                    const ask = currentPrice + (spread * 0.00001);
+                    document.getElementById('bidAsk').textContent = 
+                        `${bid.toFixed(5)} / ${ask.toFixed(5)}`;
+                }
+                
+                document.getElementById('spreadValue').textContent = data.spread || '--';
+                document.getElementById('dailyChange').textContent = 
+                    `${changePercent >= 0 ? '+' : ''}${changePercent.toFixed(3)}%`;
+                document.getElementById('dailyChange').className = 
+                    `market-info-value ${changePercent >= 0 ? 'positive' : 'negative'}`;
+            }
+            
+            // Load market data for chart
+            loadMarketDataForChart(symbol);
+        }
+        
+        function calculateDailyChange(data) {
+            // Simple daily change calculation based on price movement
+            const currentPrice = parseFloat(data.current_price) || 0;
+            if (currentPrice === 0) return 0;
+            
+            // Use a simple random change for demo
+            const basePrice = getBasePriceForSymbol(data.symbol || 'XAUUSD');
+            const change = ((currentPrice - basePrice) / basePrice) * 100;
+            
+            return isNaN(change) ? 0 : change;
+        }
+        
+        function getBasePriceForSymbol(symbol) {
+            const basePrices = {
+                'XAUUSD': 1800.00,
+                'EURUSD': 1.0800,
+                'GBPUSD': 1.2600,
+                'USDJPY': 110.00,
+                'BTCUSD': 35000.00,
+                'ETHUSD': 2000.00,
+                'TEST': 100.00
+            };
+            return basePrices[symbol] || 100.00;
+        }
+        
+        async function loadMarketDataForChart(symbol) {
+            try {
+                const tfMap = {
+                    '1': '1m', '5': '5m', '15': '15m',
+                    '60': '1h', '240': '4h', 'D': '1d'
+                };
+                
+                const response = await fetch(
+                    `/api/market_data.js?symbol=${symbol}&timeframe=${tfMap[currentTimeframe]}&limit=100`
+                );
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    
+                    if (data && data.length > 0) {
+                        // Store in cache
+                        if (!realMarketData[symbol]) realMarketData[symbol] = {};
+                        realMarketData[symbol][currentTimeframe] = data;
+                        
+                        // Update chart
+                        const series = candlestickSeries || lineSeries || areaSeries;
+                        if (series) {
+                            series.setData(data);
+                            chart.timeScale().fitContent();
+                            chart.timeScale().scrollToPosition(-1);
+                            logDebug(`Chart updated with ${data.length} candles for ${symbol}`, 'info');
+                        }
+                    }
+                }
+            } catch (error) {
+                logDebug(`Failed to load market data: ${error.message}`, 'warning');
             }
         }
         
@@ -2036,7 +1694,7 @@
                 equity: 0, balance: 0, profit: 0, total_profit_pips: 0,
                 open_trades: 0, trades: [], timestamp: 0, ml_confidence: 0,
                 ml_trained: 0, current_price: null, bid_price: null, ask_price: null,
-                spread: null, daily_change: 0
+                spread: null, symbol: 'ALL'
             };
             
             if (Object.keys(allData).length === 0) return total;
@@ -2058,7 +1716,6 @@
                     total.bid_price = d.bid_price;
                     total.ask_price = d.ask_price;
                     total.spread = d.spread;
-                    total.daily_change = d.daily_change || 0;
                 }
             });
             
@@ -2082,58 +1739,13 @@
         }
         
         function updateChartTimeframe(symbol, timeframe) {
-            // In a real implementation, this would fetch new data
             if (symbol && symbol !== 'ALL') {
-                const currentData = allData[symbol];
-                const currentPrice = parseFloat(currentData?.current_price) || 0;
-                
-                if (!isWebSocketConnected) {
-                    fetchMarketDataViaAPI(symbol, timeframe);
-                }
+                loadMarketDataForChart(symbol);
             }
-        }
-        
-        function getSpreadForSymbol(symbol) {
-            const spreadMap = {
-                'XAUUSD': 0.0002,  // 2 pips
-                'EURUSD': 0.00001, // 0.1 pips
-                'GBPUSD': 0.00002,
-                'USDJPY': 0.00002,
-                'BTCUSD': 0.0005,  // 5 pips
-                'ETHUSD': 0.0008,  // 8 pips
-            };
-            return spreadMap[symbol] || 0.00005;
-        }
-        
-        function startAutoRefresh() {
-            let seconds = 5;
-            
-            refreshTimer = setInterval(() => {
-                seconds--;
-                document.getElementById('refreshTimer').textContent = `${seconds}s`;
-                
-                if (seconds <= 0) {
-                    if (!isWebSocketConnected) {
-                        updateDashboard();
-                    }
-                    seconds = 5;
-                }
-            }, 1000);
         }
         
         // =================== INITIALIZE APP ===================
         document.addEventListener('DOMContentLoaded', initApplication);
-        
-        // Performance cleanup every 5 minutes
-        setInterval(() => {
-            performanceStats = {
-                chartUpdates: 0,
-                wsMessages: 0,
-                apiCalls: 0,
-                lastCleanup: Date.now()
-            };
-            logDebug('Performance stats cleared', 'info');
-        }, 300000);
     </script>
 </body>
 </html>

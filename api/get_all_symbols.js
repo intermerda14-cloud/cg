@@ -6,11 +6,16 @@ let cachedDb = null;
 async function connectToDatabase() {
   if (cachedDb) return cachedDb;
   
-  const client = await MongoClient.connect(MONGODB_URI);
-  const db = client.db('trading_monitor');
-  cachedDb = { client, db };
-  
-  return cachedDb;
+  try {
+    const client = await MongoClient.connect(MONGODB_URI);
+    const db = client.db('trading_monitor');
+    cachedDb = { client, db };
+    console.log('✅ Connected to MongoDB');
+    return cachedDb;
+  } catch (error) {
+    console.error('❌ MongoDB connection failed:', error.message);
+    throw error;
+  }
 }
 
 export default async function handler(req, res) {
@@ -22,77 +27,83 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
-
+  
+  console.log(`\n📊 [${new Date().toISOString()}] Fetching all symbols data`);
+  
   try {
     const { client, db } = await connectToDatabase();
-    
-    // Get all unique symbols
     const collection = db.collection('trades');
-    const symbols = await collection.distinct('symbol');
     
-    if (symbols.length === 0) {
+    // Get ALL documents, not just distinct symbols
+    const allTrades = await collection.find({}).sort({ timestamp: -1 }).toArray();
+    
+    console.log(`📈 Found ${allTrades.length} total documents in database`);
+    
+    if (allTrades.length === 0) {
       return res.status(200).json({
         status: 'no_data',
-        message: 'No trading data found',
+        message: 'No trading data found in database',
         timestamp: Math.floor(Date.now() / 1000),
         symbols: []
       });
     }
     
-    const result = {};
+    // Group by symbol and get latest for each
+    const symbolsMap = new Map();
     
-    for (const symbol of symbols) {
-      // Get latest data for each symbol
-      const latest = await collection
-        .find({ symbol })
-        .sort({ timestamp: -1 })
-        .limit(1)
-        .toArray();
+    allTrades.forEach(trade => {
+      const symbol = trade.symbol;
       
-      if (latest.length > 0) {
-        const data = latest[0];
-        
-        // Get open trades for this symbol
-        const openTrades = await collection
-          .find({ symbol, status: 'open' })
-          .toArray();
-        
-        // Calculate totals
-        const totalProfit = openTrades.reduce((sum, trade) => 
-          sum + (parseFloat(trade.profit_usd) || 0), 0);
-        
-        const totalProfitPips = openTrades.reduce((sum, trade) => 
-          sum + (parseFloat(trade.profit_pips) || 0), 0);
-        
-        result[symbol] = {
-          ...data,
-          open_trades: openTrades.length,
-          trades: openTrades,
-          profit: totalProfit.toFixed(2),
-          total_profit_pips: totalProfitPips.toFixed(1),
-          equity: (parseFloat(data.balance || 0) + totalProfit).toFixed(2)
-        };
+      // Only keep the latest entry for each symbol
+      if (!symbolsMap.has(symbol) || trade.timestamp > symbolsMap.get(symbol).timestamp) {
+        symbolsMap.set(symbol, trade);
       }
-    }
+    });
+    
+    // Convert to object
+    const result = {};
+    symbolsMap.forEach((tradeData, symbol) => {
+      result[symbol] = {
+        symbol: tradeData.symbol,
+        timestamp: tradeData.timestamp,
+        equity: tradeData.equity || 0,
+        balance: tradeData.balance || 0,
+        profit: tradeData.profit || 0,
+        open_trades: tradeData.open_trades || 0,
+        current_price: tradeData.current_price || 0,
+        bid_price: tradeData.bid_price || 0,
+        ask_price: tradeData.ask_price || 0,
+        spread: tradeData.spread || 0,
+        ml_confidence: tradeData.ml_confidence || 0,
+        ml_trained: tradeData.ml_trained || 0,
+        total_profit_pips: tradeData.total_profit_pips || 0,
+        total_profit_usd: tradeData.total_profit_usd || 0,
+        trades: tradeData.trades || []
+      };
+    });
+    
+    console.log(`🎯 Processed ${symbolsMap.size} unique symbols`);
     
     // Add summary
     const summary = {
-      total_symbols: Object.keys(result).length,
-      total_open_trades: Object.values(result).reduce((sum, data) => 
+      total_symbols: symbolsMap.size,
+      total_open_trades: Array.from(symbolsMap.values()).reduce((sum, data) => 
         sum + (data.open_trades || 0), 0),
-      total_profit: Object.values(result).reduce((sum, data) => 
+      total_profit: Array.from(symbolsMap.values()).reduce((sum, data) => 
         sum + parseFloat(data.profit || 0), 0).toFixed(2),
       server_time: Math.floor(Date.now() / 1000)
     };
     
-    res.status(200).json({
-      ...result,
-      _summary: summary,
-      status: 'success'
-    });
+    // Add summary to result
+    result._summary = summary;
+    result.status = 'success';
+    
+    console.log('📋 Summary:', summary);
+    
+    res.status(200).json(result);
     
   } catch (error) {
-    console.error('API Error:', error);
+    console.error('❌ API Error:', error);
     res.status(500).json({
       status: 'error',
       message: error.message,

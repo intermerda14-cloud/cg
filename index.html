@@ -1028,13 +1028,13 @@
             if (priceElement && price) {
                 priceElement.dataset.lastPrice = price;
                 
-                // Update chart jika sedang melihat symbol yang sama
+                // Update chart jika sedang melihat symbol yang sama - pakai smooth update
                 if (currentSymbol !== 'ALL') {
                     const currentData = allData[currentSymbol];
                     if (currentData && currentData.current_price !== price) {
                         // Update data dengan harga baru
                         currentData.current_price = price;
-                        generateChartDataFromRealPrice(currentSymbol, price);
+                        smoothUpdateChartPrice(currentSymbol, price);
                     }
                 }
             }
@@ -1042,10 +1042,10 @@
         
         // =================== INITIALIZATION ===================
         async function initApplication() {
-            updateLoadingStatus('Initializing TradingView Monitor...', 'v2.0 - Fixed Chart Price');
+            updateLoadingStatus('Initializing TradingView Monitor...', 'v2.0 - Smooth Chart');
             updateLoadingProgress(10);
             
-            logDebug('🚀 Initializing TradingView Monitor v2.0 - Fixed Chart Price', 'info');
+            logDebug('🚀 Initializing TradingView Monitor v2.0 - Smooth Chart Update', 'info');
             
             // Initialize systems step by step
             updateLoadingStatus('Setting up time display...');
@@ -1178,7 +1178,7 @@
             logDebug('Polling system started (5s interval)', 'info');
         }
         
-        // =================== CHART SYSTEM ===================
+        // =================== CHART SYSTEM (SMOOTH UPDATE) ===================
         async function initChart() {
             logDebug('Initializing TradingView chart...', 'info');
             
@@ -1226,6 +1226,8 @@
                         rightOffset: 10,
                         barSpacing: 6,
                         minBarSpacing: 3,
+                        fixLeftEdge: true,
+                        fixRightEdge: true,
                     },
                     handleScale: {
                         mouseWheel: true,
@@ -1253,6 +1255,7 @@
                         precision: 5,
                         minMove: 0.00001,
                     },
+                    priceLineVisible: false, // MATIKAN PRICE LINE AGAR TIDAK DOUBLE
                 });
                 
                 // Set initial empty data
@@ -1293,6 +1296,7 @@
                         borderUpColor: '#10b981',
                         wickDownColor: '#ef4444',
                         wickUpColor: '#10b981',
+                        priceLineVisible: false,
                     });
                     break;
                     
@@ -1301,6 +1305,7 @@
                         color: '#667eea',
                         lineWidth: 2,
                         crosshairMarkerVisible: true,
+                        priceLineVisible: false,
                     });
                     break;
                     
@@ -1310,6 +1315,7 @@
                         bottomColor: 'rgba(102, 126, 234, 0.0)',
                         lineColor: '#667eea',
                         lineWidth: 2,
+                        priceLineVisible: false,
                     });
                     break;
             }
@@ -1330,7 +1336,7 @@
             }
         }
         
-        // =================== CHART FUNCTIONS (FIXED) ===================
+        // =================== CHART FUNCTIONS (SMOOTH UPDATE) ===================
         function updateChartForSymbol(symbol, data) {
             if (!chart) return;
             
@@ -1358,68 +1364,97 @@
             document.getElementById('dailyChange').textContent = `${dailyChange >= 0 ? '+' : ''}${dailyChange.toFixed(3)}%`;
             document.getElementById('dailyChange').className = `market-info-value ${dailyChange >= 0 ? 'positive' : 'negative'}`;
             
-            // Generate chart data berdasarkan harga REAL dari EA
-            generateChartDataFromRealPrice(symbol, currentPrice);
+            // Update chart dengan harga real - SMOOTH UPDATE
+            smoothUpdateChartPrice(symbol, currentPrice);
         }
         
-        function generateChartDataFromRealPrice(symbol, currentPrice) {
+        function smoothUpdateChartPrice(symbol, currentPrice) {
             if (!currentPrice || currentPrice === 0) {
-                logDebug(`No valid price for ${symbol}, using default`, 'warning');
-                loadMarketDataForChart(symbol); // Fallback to default
+                logDebug(`No valid price for ${symbol}`, 'warning');
                 return;
             }
             
-            // Jika sudah ada data untuk symbol/timeframe ini, update dengan price yang benar
+            // Cek apakah sudah ada data untuk symbol/timeframe ini
             if (!realMarketData[symbol]) realMarketData[symbol] = {};
             
-            const existingData = realMarketData[symbol][currentTimeframe];
+            let existingData = realMarketData[symbol][currentTimeframe];
             
-            if (existingData && existingData.length > 0) {
-                // Update last candle dengan harga real
-                const lastCandle = existingData[existingData.length - 1];
-                
-                // Pastikan harga tidak melonjak terlalu jauh
-                const priceDiff = Math.abs(currentPrice - lastCandle.close);
-                const maxDiff = lastCandle.close * 0.01; // Maks 1% perubahan
-                
-                if (priceDiff < maxDiff) {
-                    // Update candle terakhir dengan harga real
-                    const updatedCandle = {
-                        ...lastCandle,
-                        time: Math.floor(Date.now() / 1000),
-                        high: Math.max(lastCandle.high, currentPrice),
-                        low: Math.min(lastCandle.low, currentPrice),
-                        close: currentPrice
-                    };
-                    
-                    existingData[existingData.length - 1] = updatedCandle;
-                    
-                    // Update chart
-                    const series = candlestickSeries || lineSeries || areaSeries;
-                    if (series) {
-                        series.update(updatedCandle);
-                        logDebug(`✅ Chart updated with real price: $${currentPrice.toFixed(5)}`, 'info');
-                    }
-                } else {
-                    // Price change terlalu besar, generate data baru
-                    logDebug(`Price change too large (${priceDiff.toFixed(5)}), regenerating chart`, 'warning');
-                    generateNewChartData(symbol, currentPrice);
-                }
-            } else {
-                // Tidak ada data sebelumnya, generate baru
-                generateNewChartData(symbol, currentPrice);
+            if (!existingData || existingData.length === 0) {
+                // Generate data baru jika belum ada
+                generateInitialChartData(symbol, currentPrice);
+                return;
             }
+            
+            // Ambil candle terakhir
+            let lastCandle = existingData[existingData.length - 1];
+            const currentTime = Math.floor(Date.now() / 1000);
+            const tfMinutes = getTimeframeMinutes(currentTimeframe);
+            const candleEndTime = lastCandle.time + (tfMinutes * 60);
+            
+            // Cek apakah masih dalam timeframe candle yang sama
+            if (currentTime < candleEndTime) {
+                // UPDATE CANDLE YANG SAMA (SMOOTH)
+                const updatedCandle = {
+                    time: lastCandle.time,
+                    open: lastCandle.open,
+                    high: Math.max(lastCandle.high, currentPrice),
+                    low: Math.min(lastCandle.low, currentPrice),
+                    close: currentPrice,
+                    volume: lastCandle.volume + 1 // Tambah volume sedikit
+                };
+                
+                // Update data
+                existingData[existingData.length - 1] = updatedCandle;
+                
+                // Update chart dengan smooth animation
+                const series = candlestickSeries || lineSeries || areaSeries;
+                if (series) {
+                    series.update(updatedCandle);
+                }
+                
+                logDebug(`🔄 Smooth candle update: $${currentPrice.toFixed(5)} (High: ${updatedCandle.high.toFixed(5)}, Low: ${updatedCandle.low.toFixed(5)})`, 'info');
+                
+            } else {
+                // WAKTU UNTUK CANDLE BARU
+                // Buat candle baru berdasarkan close candle sebelumnya
+                const newCandle = {
+                    time: candleEndTime, // Mulai dari waktu berakhirnya candle sebelumnya
+                    open: lastCandle.close,
+                    high: currentPrice,
+                    low: currentPrice,
+                    close: currentPrice,
+                    volume: Math.floor(Math.random() * 100) + 50
+                };
+                
+                // Tambah candle baru
+                existingData.push(newCandle);
+                
+                // Hapus candle lama jika terlalu banyak (max 500 candle)
+                if (existingData.length > 500) {
+                    existingData.shift();
+                }
+                
+                // Update chart dengan data lengkap
+                const series = candlestickSeries || lineSeries || areaSeries;
+                if (series) {
+                    series.setData(existingData);
+                    // Scroll ke posisi terbaru
+                    chart.timeScale().scrollToPosition(-1);
+                }
+                
+                logDebug(`🆕 New candle created: $${currentPrice.toFixed(5)}`, 'info');
+            }
+            
+            // Simpan data terbaru
+            realMarketData[symbol][currentTimeframe] = existingData;
         }
         
-        function generateNewChartData(symbol, basePrice) {
+        function generateInitialChartData(symbol, basePrice) {
             const count = 100;
-            const tfMinutes = {
-                '1': 1, '5': 5, '15': 15,
-                '60': 60, '240': 240, 'D': 1440
-            }[currentTimeframe] || 1;
-            
+            const tfMinutes = getTimeframeMinutes(currentTimeframe);
             const volatility = getVolatilityForSymbol(symbol);
             const candles = [];
+            
             let currentPrice = basePrice;
             const startTime = Math.floor(Date.now() / 1000) - (count * tfMinutes * 60);
             
@@ -1451,7 +1486,7 @@
                 candles[candles.length - 1].close = lastRealPrice;
                 candles[candles.length - 1].high = Math.max(candles[candles.length - 1].high, lastRealPrice);
                 candles[candles.length - 1].low = Math.min(candles[candles.length - 1].low, lastRealPrice);
-                candles[candles.length - 1].time = Math.floor(Date.now() / 1000);
+                candles[candles.length - 1].time = Math.floor(Date.now() / 1000) - (tfMinutes * 60);
             }
             
             // Store in cache
@@ -1464,8 +1499,16 @@
                 series.setData(candles);
                 chart.timeScale().fitContent();
                 chart.timeScale().scrollToPosition(-1);
-                logDebug(`📊 Generated new chart for ${symbol} based on real price $${basePrice.toFixed(5)}`, 'info');
+                logDebug(`📊 Initial chart generated for ${symbol} at $${basePrice.toFixed(5)}`, 'info');
             }
+        }
+        
+        function getTimeframeMinutes(tf) {
+            const tfMap = {
+                '1': 1, '5': 5, '15': 15,
+                '60': 60, '240': 240, 'D': 1440
+            };
+            return tfMap[tf] || 1;
         }
         
         function getVolatilityForSymbol(symbol) {
@@ -1479,49 +1522,6 @@
                 'TEST': 0.0005
             };
             return volatilityMap[symbol] || 0.0002;
-        }
-        
-        async function loadMarketDataForChart(symbol) {
-            try {
-                // Coba dapetin harga real dulu
-                const realPrice = parseFloat(document.getElementById('currentPrice')?.textContent || 0);
-                
-                if (realPrice && realPrice > 0) {
-                    // Pakai harga real dari display
-                    generateChartDataFromRealPrice(symbol, realPrice);
-                    return;
-                }
-                
-                // Fallback ke API kalau ga ada harga real
-                const tfMap = {
-                    '1': '1m', '5': '5m', '15': '15m',
-                    '60': '1h', '240': '4h', 'D': '1d'
-                };
-                
-                const response = await fetch(
-                    `/api/market_data.js?symbol=${symbol}&timeframe=${tfMap[currentTimeframe]}&limit=100`
-                );
-                
-                if (response.ok) {
-                    const data = await response.json();
-                    
-                    if (data && data.length > 0) {
-                        // Store in cache
-                        if (!realMarketData[symbol]) realMarketData[symbol] = {};
-                        realMarketData[symbol][currentTimeframe] = data;
-                        
-                        // Update chart
-                        const series = candlestickSeries || lineSeries || areaSeries;
-                        if (series) {
-                            series.setData(data);
-                            chart.timeScale().fitContent();
-                            chart.timeScale().scrollToPosition(-1);
-                        }
-                    }
-                }
-            } catch (error) {
-                logDebug(`Failed to load market data: ${error.message}`, 'warning');
-            }
         }
         
         // =================== DATA FETCHING ===================
@@ -1913,7 +1913,11 @@
         
         function updateChartTimeframe(symbol, timeframe) {
             if (symbol && symbol !== 'ALL') {
-                loadMarketDataForChart(symbol);
+                // Reset chart data untuk timeframe baru
+                if (realMarketData[symbol]) {
+                    delete realMarketData[symbol][currentTimeframe];
+                }
+                smoothUpdateChartPrice(symbol, parseFloat(document.getElementById('currentPrice').textContent) || 0);
             }
         }
         

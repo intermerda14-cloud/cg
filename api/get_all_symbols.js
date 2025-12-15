@@ -34,17 +34,23 @@ export default async function handler(req, res) {
     const { client, db } = await connectToDatabase();
     const collection = db.collection('trades');
     
-    // Get ALL documents, not just distinct symbols
+    // Get ALL documents, sorted by timestamp
     const allTrades = await collection.find({}).sort({ timestamp: -1 }).toArray();
     
     console.log(`📈 Found ${allTrades.length} total documents in database`);
     
     if (allTrades.length === 0) {
       return res.status(200).json({
-        status: 'no_data',
+        status: 'success',
         message: 'No trading data found in database',
         timestamp: Math.floor(Date.now() / 1000),
-        symbols: []
+        symbols: [],
+        _summary: {
+          total_symbols: 0,
+          total_open_trades: 0,
+          total_profit: '0.00',
+          server_time: Math.floor(Date.now() / 1000)
+        }
       });
     }
     
@@ -53,44 +59,56 @@ export default async function handler(req, res) {
     
     allTrades.forEach(trade => {
       const symbol = trade.symbol;
+      if (!symbol) return;
+      
+      // Ensure trades field is an array
+      if (!Array.isArray(trade.trades)) {
+        trade.trades = [];
+      }
       
       // Only keep the latest entry for each symbol
       if (!symbolsMap.has(symbol) || trade.timestamp > symbolsMap.get(symbol).timestamp) {
-        symbolsMap.set(symbol, trade);
+        symbolsMap.set(symbol, {
+          symbol: trade.symbol,
+          timestamp: trade.timestamp || Math.floor(Date.now() / 1000),
+          equity: parseFloat(trade.equity) || 0,
+          balance: parseFloat(trade.balance) || 0,
+          profit: parseFloat(trade.profit) || 0,
+          open_trades: parseInt(trade.open_trades) || 0,
+          current_price: parseFloat(trade.current_price) || 0,
+          bid_price: parseFloat(trade.bid_price) || 0,
+          ask_price: parseFloat(trade.ask_price) || 0,
+          spread: parseInt(trade.spread) || 0,
+          ml_confidence: parseFloat(trade.ml_confidence) || 0,
+          ml_trained: parseInt(trade.ml_trained) || 0,
+          total_profit_pips: parseFloat(trade.total_profit_pips) || 0,
+          total_profit_usd: parseFloat(trade.total_profit_usd) || 0,
+          trades: Array.isArray(trade.trades) ? trade.trades : []
+        });
       }
-    });
-    
-    // Convert to object
-    const result = {};
-    symbolsMap.forEach((tradeData, symbol) => {
-      result[symbol] = {
-        symbol: tradeData.symbol,
-        timestamp: tradeData.timestamp,
-        equity: tradeData.equity || 0,
-        balance: tradeData.balance || 0,
-        profit: tradeData.profit || 0,
-        open_trades: tradeData.open_trades || 0,
-        current_price: tradeData.current_price || 0,
-        bid_price: tradeData.bid_price || 0,
-        ask_price: tradeData.ask_price || 0,
-        spread: tradeData.spread || 0,
-        ml_confidence: tradeData.ml_confidence || 0,
-        ml_trained: tradeData.ml_trained || 0,
-        total_profit_pips: tradeData.total_profit_pips || 0,
-        total_profit_usd: tradeData.total_profit_usd || 0,
-        trades: tradeData.trades || []
-      };
     });
     
     console.log(`🎯 Processed ${symbolsMap.size} unique symbols`);
     
-    // Add summary
+    // Convert Map to object
+    const result = {};
+    symbolsMap.forEach((tradeData, symbol) => {
+      result[symbol] = tradeData;
+    });
+    
+    // Calculate summary
+    let totalOpenTrades = 0;
+    let totalProfit = 0;
+    
+    symbolsMap.forEach(data => {
+      totalOpenTrades += data.open_trades || 0;
+      totalProfit += parseFloat(data.profit) || 0;
+    });
+    
     const summary = {
       total_symbols: symbolsMap.size,
-      total_open_trades: Array.from(symbolsMap.values()).reduce((sum, data) => 
-        sum + (data.open_trades || 0), 0),
-      total_profit: Array.from(symbolsMap.values()).reduce((sum, data) => 
-        sum + parseFloat(data.profit || 0), 0).toFixed(2),
+      total_open_trades: totalOpenTrades,
+      total_profit: totalProfit.toFixed(2),
       server_time: Math.floor(Date.now() / 1000)
     };
     

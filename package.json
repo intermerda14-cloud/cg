@@ -1,0 +1,23 @@
+{
+  "name": "bb-golden-scalper-monitor",
+  "version": "3.6.0",
+  "description": "BB Golden Scalper V3.6 ML Advanced - TradingView Monitor with WebSocket",
+  "type": "module",
+  "scripts": {
+    "dev": "vercel dev",
+    "start": "vercel dev",
+    "build": "echo 'Building for Vercel'"
+  },
+  "dependencies": {
+    "mongodb": "^6.3.0"
+  },
+  "devDependencies": {
+    "@vercel/node": "^3.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": ["trading", "metatrader", "forex", "tradingview", "websocket"],
+  "author": "BB Golden Scalper Team",
+  "license": "MIT"
+}

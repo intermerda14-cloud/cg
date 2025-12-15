@@ -1,0 +1,2139 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BB Golden Scalper V3.6 - TradingView Monitor</title>
+    
+    <!-- Trading Charts -->
+    <script src="https://cdn.jsdelivr.net/npm/lightweight-charts@4.1.0/dist/lightweight-charts.standalone.production.js"></script>
+    
+    <!-- Socket.IO for WebSocket -->
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        /* =================== GLOBAL STYLES =================== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        }
+        
+        body {
+            background: #0a0e17;
+            color: #ffffff;
+            overflow-x: hidden;
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+        
+        /* =================== HEADER =================== */
+        .header {
+            background: linear-gradient(135deg, #1a1f3a 0%, #0f1324 100%);
+            padding: 18px 30px;
+            border-bottom: 1px solid rgba(102, 126, 234, 0.2);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            backdrop-filter: blur(10px);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 20px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .logo-icon {
+            font-size: 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .status-badge {
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.3s;
+        }
+        
+        .status-badge.online {
+            background: rgba(16, 185, 129, 0.15);
+            color: #10b981;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+        
+        .status-badge.offline {
+            background: rgba(239, 68, 68, 0.15);
+            color: #ef4444;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+        
+        .status-badge.connecting {
+            background: rgba(245, 158, 11, 0.15);
+            color: #f59e0b;
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            animation: pulse 1.5s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+        
+        /* =================== SYMBOL SELECTOR =================== */
+        .symbol-selector-container {
+            background: #1a1f3a;
+            border-radius: 12px;
+            padding: 15px;
+            margin: 20px;
+            border: 1px solid rgba(102, 126, 234, 0.2);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+        }
+        
+        .symbol-selector {
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+            padding-bottom: 5px;
+        }
+        
+        .symbol-selector::-webkit-scrollbar {
+            height: 6px;
+        }
+        
+        .symbol-selector::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 3px;
+        }
+        
+        .symbol-selector::-webkit-scrollbar-thumb {
+            background: rgba(102, 126, 234, 0.5);
+            border-radius: 3px;
+        }
+        
+        .symbol-btn {
+            padding: 10px 20px;
+            background: #2a2f4a;
+            border: 1px solid #3a3f5a;
+            border-radius: 8px;
+            color: #8b92b0;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+        }
+        
+        .symbol-btn:hover {
+            background: #3a3f5a;
+            border-color: #667eea;
+            color: #fff;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+        }
+        
+        .symbol-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-color: #667eea;
+            color: #fff;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .symbol-btn .trade-badge {
+            background: #ef4444;
+            color: white;
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-weight: bold;
+            min-width: 18px;
+            text-align: center;
+        }
+        
+        /* =================== STATS GRID =================== */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 0 20px 20px;
+        }
+        
+        .stat-card {
+            background: linear-gradient(135deg, #1a1f3a 0%, #2a2f4a 100%);
+            padding: 18px;
+            border-radius: 12px;
+            border: 1px solid rgba(102, 126, 234, 0.2);
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.15);
+        }
+        
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .stat-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .stat-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            background: rgba(102, 126, 234, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #667eea;
+            font-size: 14px;
+        }
+        
+        .stat-card h3 {
+            color: #8b92b0;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+        
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+        
+        .stat-value.positive { color: #10b981; }
+        .stat-value.negative { color: #ef4444; }
+        .stat-value.neutral { color: #fff; }
+        
+        .stat-change {
+            font-size: 12px;
+            color: #8b92b0;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        /* =================== CHART CONTAINER =================== */
+        .chart-container {
+            background: #1a1f3a;
+            border-radius: 12px;
+            margin: 0 20px 20px;
+            border: 1px solid rgba(102, 126, 234, 0.2);
+            overflow: hidden;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+        }
+        
+        .chart-header {
+            padding: 20px 20px 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        
+        .chart-title {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .chart-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        
+        .timeframe-selector, .chart-type-selector {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        
+        .control-btn {
+            padding: 8px 16px;
+            background: #2a2f4a;
+            border: 1px solid #3a3f5a;
+            border-radius: 6px;
+            color: #8b92b0;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .control-btn:hover {
+            background: #3a3f5a;
+            color: #fff;
+        }
+        
+        .control-btn.active {
+            background: #667eea;
+            color: #fff;
+            border-color: #667eea;
+        }
+        
+        .market-info {
+            display: flex;
+            gap: 20px;
+            font-size: 13px;
+            flex-wrap: wrap;
+        }
+        
+        .market-info-item {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        
+        .market-info-label {
+            color: #8b92b0;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .market-info-value {
+            font-weight: 600;
+            color: #fff;
+        }
+        
+        .market-info-value.positive { color: #10b981; }
+        .market-info-value.negative { color: #ef4444; }
+        
+        #tradingChart {
+            height: 500px;
+            width: 100%;
+        }
+        
+        /* =================== TRADES PANEL =================== */
+        .trades-panel {
+            background: #1a1f3a;
+            border-radius: 12px;
+            margin: 0 20px 20px;
+            border: 1px solid rgba(102, 126, 234, 0.2);
+            overflow: hidden;
+        }
+        
+        .trades-header {
+            padding: 18px 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .trades-header h2 {
+            font-size: 16px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .trade-count {
+            background: rgba(102, 126, 234, 0.1);
+            color: #8b92b0;
+            font-size: 11px;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-weight: 600;
+        }
+        
+        .trades-list {
+            padding: 0 20px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        
+        .trade-item {
+            background: #2a2f4a;
+            padding: 16px;
+            border-radius: 10px;
+            border-left: 4px solid;
+            display: grid;
+            grid-template-columns: auto 1fr auto;
+            gap: 15px;
+            align-items: center;
+            transition: all 0.3s;
+            border-left-color: #667eea;
+        }
+        
+        .trade-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .trade-item.buy { border-left-color: #10b981; }
+        .trade-item.sell { border-left-color: #ef4444; }
+        
+        .trade-type {
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .trade-type.buy {
+            background: rgba(16, 185, 129, 0.15);
+            color: #10b981;
+        }
+        
+        .trade-type.sell {
+            background: rgba(239, 68, 68, 0.15);
+            color: #ef4444;
+        }
+        
+        .trade-details {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        
+        .trade-details .main {
+            font-size: 13px;
+            font-weight: 600;
+        }
+        
+        .trade-details .sub {
+            font-size: 11px;
+            color: #8b92b0;
+            display: flex;
+            gap: 15px;
+        }
+        
+        .trade-profit {
+            text-align: right;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        
+        .trade-profit .pips {
+            font-size: 14px;
+            font-weight: 700;
+        }
+        
+        .trade-profit .usd {
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .trade-profit.positive .pips,
+        .trade-profit.positive .usd { color: #10b981; }
+        
+        .trade-profit.negative .pips,
+        .trade-profit.negative .usd { color: #ef4444; }
+        
+        .no-trades {
+            text-align: center;
+            padding: 40px 20px;
+            color: #8b92b0;
+            font-size: 14px;
+        }
+        
+        /* =================== FOOTER =================== */
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: #8b92b0;
+            font-size: 12px;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            margin-top: 20px;
+        }
+        
+        .footer-stats {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+        }
+        
+        /* =================== DEBUG PANEL =================== */
+        .debug-panel {
+            background: rgba(42, 47, 74, 0.9);
+            border-radius: 8px;
+            padding: 15px;
+            margin: 20px;
+            border-left: 4px solid #ef4444;
+            font-family: 'Monaco', 'Courier New', monospace;
+            font-size: 12px;
+            display: none;
+            backdrop-filter: blur(10px);
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .debug-panel.show {
+            display: block;
+            animation: slideDown 0.3s ease;
+        }
+        
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .debug-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .debug-close {
+            background: none;
+            border: none;
+            color: #8b92b0;
+            cursor: pointer;
+            font-size: 14px;
+            padding: 5px 10px;
+            border-radius: 4px;
+        }
+        
+        .debug-close:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        /* =================== WEBSOCKET STATUS =================== */
+        .ws-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            padding: 4px 12px;
+            border-radius: 20px;
+            background: rgba(102, 126, 234, 0.1);
+        }
+        
+        .ws-status.online {
+            color: #10b981;
+            background: rgba(16, 185, 129, 0.1);
+        }
+        
+        .ws-status.offline {
+            color: #ef4444;
+            background: rgba(239, 68, 68, 0.1);
+        }
+        
+        .ws-status.connecting {
+            color: #f59e0b;
+            background: rgba(245, 158, 11, 0.1);
+        }
+        
+        /* =================== LOADING OVERLAY =================== */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(10, 14, 23, 0.95);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            backdrop-filter: blur(5px);
+            transition: opacity 0.3s;
+        }
+        
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid rgba(102, 126, 234, 0.3);
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .loading-progress {
+            width: 200px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+            margin-top: 20px;
+            overflow: hidden;
+        }
+        
+        .loading-progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            width: 0%;
+            transition: width 0.3s;
+            border-radius: 2px;
+        }
+        
+        /* =================== RESPONSIVE =================== */
+        @media (max-width: 768px) {
+            .header {
+                padding: 15px;
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+                margin: 10px;
+                gap: 10px;
+            }
+            
+            .chart-controls {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+            
+            .market-info {
+                width: 100%;
+                justify-content: space-between;
+            }
+            
+            .trade-item {
+                grid-template-columns: 1fr;
+                text-align: center;
+                gap: 10px;
+            }
+            
+            .trade-details .sub {
+                justify-content: center;
+                flex-wrap: wrap;
+                gap: 10px;
+            }
+            
+            .trade-profit {
+                text-align: center;
+            }
+            
+            .symbol-selector-container,
+            .chart-container,
+            .trades-panel {
+                margin: 10px;
+            }
+            
+            .footer-stats {
+                gap: 15px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .market-info {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .chart-title {
+                font-size: 16px;
+            }
+            
+            .footer-stats {
+                flex-direction: column;
+                gap: 10px;
+            }
+        }
+        
+        /* =================== ANIMATIONS =================== */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes priceUp {
+            0% { background-color: transparent; }
+            50% { background-color: rgba(16, 185, 129, 0.2); }
+            100% { background-color: transparent; }
+        }
+        
+        @keyframes priceDown {
+            0% { background-color: transparent; }
+            50% { background-color: rgba(239, 68, 68, 0.2); }
+            100% { background-color: transparent; }
+        }
+        
+        .price-up {
+            animation: priceUp 1s ease;
+        }
+        
+        .price-down {
+            animation: priceDown 1s ease;
+        }
+        
+        /* =================== TOOLTIPS =================== */
+        .tooltip {
+            position: relative;
+            cursor: help;
+        }
+        
+        .tooltip:hover::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            white-space: nowrap;
+            z-index: 1000;
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner"></div>
+        <div style="color: #667eea; font-weight: 600; margin-bottom: 10px; text-align: center;">
+            <div id="loadingStatus">Initializing TradingView Monitor...</div>
+            <div style="font-size: 13px; color: #8b92b0; margin-top: 5px;" id="loadingSubstatus">
+                Connecting to real-time server...
+            </div>
+        </div>
+        <div class="loading-progress">
+            <div class="loading-progress-bar" id="loadingProgress"></div>
+        </div>
+    </div>
+    
+    <!-- Header -->
+    <div class="header">
+        <div class="header-left">
+            <div class="logo">
+                <div class="logo-icon">🤖</div>
+                <span>BB Golden Scalper V3.6 ML</span>
+            </div>
+            <span class="status-badge connecting" id="statusBadge">
+                <i class="fas fa-sync-alt fa-spin"></i> CONNECTING
+            </span>
+            <div class="ws-status connecting" id="wsStatus">
+                <i class="fas fa-plug"></i>
+                <span>WS: Connecting...</span>
+            </div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 15px;">
+            <div style="font-size: 13px; color: #8b92b0;">
+                <i class="fas fa-clock"></i> <span id="currentTime">--:--:--</span>
+            </div>
+            <button id="debugToggle" style="background: none; border: 1px solid rgba(102,126,234,0.3); color: #8b92b0; padding: 6px 12px; border-radius: 6px; font-size: 12px; cursor: pointer;">
+                <i class="fas fa-bug"></i> Debug
+            </button>
+        </div>
+    </div>
+    
+    <!-- Debug Panel -->
+    <div class="debug-panel" id="debugPanel">
+        <div class="debug-header">
+            <strong style="color: #ef4444;"><i class="fas fa-bug"></i> DEBUG CONSOLE</strong>
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <span style="font-size: 11px; color: #8b92b0;" id="debugStats">
+                    Clients: 0 | Memory: --
+                </span>
+                <button class="debug-close" id="debugClose"><i class="fas fa-times"></i></button>
+            </div>
+        </div>
+        <div id="debugContent" style="font-family: monospace; font-size: 11px; line-height: 1.5;">
+            <div>> System initializing...</div>
+        </div>
+    </div>
+    
+    <!-- Symbol Selector -->
+    <div class="symbol-selector-container">
+        <div class="symbol-selector" id="symbolSelector">
+            <button class="symbol-btn active" data-symbol="ALL">
+                <i class="fas fa-chart-bar"></i> ALL INSTRUMENTS
+            </button>
+            <!-- Symbols will be added dynamically -->
+        </div>
+    </div>
+    
+    <!-- Stats Grid -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-header">
+                <div class="stat-icon"><i class="fas fa-wallet"></i></div>
+                <div>
+                    <h3>💰 EQUITY</h3>
+                    <div class="stat-value neutral" id="equity">$0.00</div>
+                </div>
+            </div>
+            <div class="stat-change" id="equityChange">
+                <i class="fas fa-minus"></i> $0.00
+            </div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-header">
+                <div class="stat-icon"><i class="fas fa-balance-scale"></i></div>
+                <div>
+                    <h3>📊 BALANCE</h3>
+                    <div class="stat-value neutral" id="balance">$0.00</div>
+                </div>
+            </div>
+            <div class="stat-change">Account Balance</div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-header">
+                <div class="stat-icon"><i class="fas fa-chart-line"></i></div>
+                <div>
+                    <h3>💵 PROFIT/LOSS</h3>
+                    <div class="stat-value neutral" id="profit">$0.00</div>
+                </div>
+            </div>
+            <div class="stat-change" id="profitPips">
+                <i class="fas fa-arrows-alt-h"></i> 0.0 pips
+            </div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-header">
+                <div class="stat-icon"><i class="fas fa-exchange-alt"></i></div>
+                <div>
+                    <h3>📈 OPEN TRADES</h3>
+                    <div class="stat-value neutral" id="openTrades">0</div>
+                </div>
+            </div>
+            <div class="stat-change">Active Positions</div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-header">
+                <div class="stat-icon"><i class="fas fa-brain"></i></div>
+                <div>
+                    <h3>🧠 ML CONFIDENCE</h3>
+                    <div class="stat-value neutral" id="mlConfidence">0%</div>
+                </div>
+            </div>
+            <div class="stat-change" id="mlTrained">
+                <i class="fas fa-graduation-cap"></i> Trained: 0x
+            </div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-header">
+                <div class="stat-icon"><i class="fas fa-satellite-dish"></i></div>
+                <div>
+                    <h3>📡 CONNECTION</h3>
+                    <div class="stat-value neutral" id="connectionStatus">OFFLINE</div>
+                </div>
+            </div>
+            <div class="stat-change" id="connectionUptime">
+                <i class="fas fa-clock"></i> Uptime: 0m
+            </div>
+        </div>
+    </div>
+    
+    <!-- Chart Container -->
+    <div class="chart-container">
+        <div class="chart-header">
+            <div class="chart-title" id="chartTitle">
+                <i class="fas fa-chart-candlestick"></i>
+                <span>📈 LIVE CHART - Real-time WebSocket Streaming</span>
+            </div>
+            
+            <div class="chart-controls">
+                <div class="timeframe-selector">
+                    <button class="control-btn active" data-tf="1">M1</button>
+                    <button class="control-btn" data-tf="5">M5</button>
+                    <button class="control-btn" data-tf="15">M15</button>
+                    <button class="control-btn" data-tf="60">H1</button>
+                    <button class="control-btn" data-tf="240">H4</button>
+                    <button class="control-btn" data-tf="D">D1</button>
+                </div>
+                
+                <div class="chart-type-selector">
+                    <button class="control-btn active" data-type="candlestick">
+                        <i class="fas fa-chart-candlestick"></i> Candle
+                    </button>
+                    <button class="control-btn" data-type="line">
+                        <i class="fas fa-chart-line"></i> Line
+                    </button>
+                    <button class="control-btn" data-type="area">
+                        <i class="fas fa-chart-area"></i> Area
+                    </button>
+                </div>
+            </div>
+            
+            <div class="market-info">
+                <div class="market-info-item">
+                    <span class="market-info-label">Live Price</span>
+                    <span class="market-info-value" id="currentPrice">--</span>
+                </div>
+                <div class="market-info-item">
+                    <span class="market-info-label">Bid/Ask</span>
+                    <span class="market-info-value" id="bidAsk">-- / --</span>
+                </div>
+                <div class="market-info-item">
+                    <span class="market-info-label">Spread</span>
+                    <span class="market-info-value" id="spreadValue">--</span>
+                </div>
+                <div class="market-info-item">
+                    <span class="market-info-label">Change (24h)</span>
+                    <span class="market-info-value neutral" id="dailyChange">--</span>
+                </div>
+                <div class="market-info-item">
+                    <span class="market-info-label">Timeframe</span>
+                    <span class="market-info-value" id="timeframeValue">M1</span>
+                </div>
+                <div class="market-info-item">
+                    <span class="market-info-label">Latency</span>
+                    <span class="market-info-value" id="latencyValue">-- ms</span>
+                </div>
+            </div>
+        </div>
+        
+        <div id="tradingChart"></div>
+    </div>
+    
+    <!-- Trades Panel -->
+    <div class="trades-panel">
+        <div class="trades-header">
+            <h2>
+                <i class="fas fa-list-alt"></i>
+                <span>Active Positions</span>
+                <span class="trade-count" id="tradeCount">(0 trades)</span>
+            </h2>
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <div style="font-size: 12px; color: #8b92b0;">
+                    <i class="fas fa-sync-alt" id="refreshIcon" style="cursor: pointer;"></i>
+                    Auto-refresh: <span id="refreshTimer">5s</span>
+                </div>
+                <div style="font-size: 12px; color: #8b92b0; display: flex; align-items: center; gap: 5px;">
+                    <i class="fas fa-signal"></i>
+                    <span id="updateRate">0 msgs/sec</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="trades-list" id="tradesList">
+            <div class="no-trades">
+                <i class="fas fa-box-open" style="font-size: 24px; margin-bottom: 10px;"></i><br>
+                No active trades found
+            </div>
+        </div>
+    </div>
+    
+    <!-- Footer -->
+    <div class="footer">
+        <div class="footer-stats">
+            <div>
+                <i class="fas fa-database" style="color: #667eea;"></i>
+                Last Update: <span id="lastUpdate">--:--:--</span>
+            </div>
+            <div>
+                <i class="fas fa-server" style="color: #10b981;"></i>
+                Uptime: <span id="uptimeFooter">0m</span>
+            </div>
+            <div>
+                <i class="fas fa-bolt" style="color: #f59e0b;"></i>
+                Ping: <span id="pingTime">-- ms</span>
+            </div>
+            <div>
+                <i class="fas fa-wifi" style="color: #8b92b0;"></i>
+                Messages: <span id="messageCount">0</span>
+            </div>
+        </div>
+        <div>© 2025 BB Golden Scalper V3.6 ML Advanced - TradingView Monitor v2.0 (WebSocket)</div>
+        <div style="font-size: 10px; margin-top: 5px; color: #667eea;">
+            Real-time WebSocket Streaming • Auto-reconnect • Low Latency
+        </div>
+    </div>
+    
+    <!-- JavaScript -->
+    <script>
+        // =================== GLOBAL VARIABLES ===================
+        let chart = null;
+        let candlestickSeries = null;
+        let lineSeries = null;
+        let areaSeries = null;
+        let priceLines = [];
+        let currentSymbol = 'ALL';
+        let allData = {};
+        let connectionStart = null;
+        let isConnected = false;
+        let consecutiveErrors = 0;
+        let chartHistory = {};
+        let realMarketData = {};
+        let currentTimeframe = '1';
+        let currentChartType = 'candlestick';
+        let refreshInterval = 5000;
+        let refreshTimer = null;
+        
+        // WebSocket Variables
+        let socket = null;
+        let isWebSocketConnected = false;
+        let wsReconnectAttempts = 0;
+        const MAX_WS_RECONNECTS = 20;
+        let lastPriceUpdate = 0;
+        let messageCount = 0;
+        let updateRate = 0;
+        let lastMessageTime = Date.now();
+        
+        // Performance tracking
+        let performanceStats = {
+            chartUpdates: 0,
+            wsMessages: 0,
+            apiCalls: 0,
+            lastCleanup: Date.now()
+        };
+        
+        // Default symbols for WebSocket
+        const defaultSymbols = ['XAUUSD', 'EURUSD', 'GBPUSD', 'USDJPY', 'BTCUSD', 'ETHUSD'];
+        
+        // =================== DEBUG SYSTEM ===================
+        function logDebug(message, type = 'info') {
+            const debugPanel = document.getElementById('debugContent');
+            const timestamp = new Date().toLocaleTimeString();
+            const typeIcon = type === 'error' ? '❌' : type === 'warning' ? '⚠️' : 'ℹ️';
+            const typeColor = type === 'error' ? '#ef4444' : type === 'warning' ? '#f59e0b' : '#8b92b0';
+            
+            const logEntry = document.createElement('div');
+            logEntry.innerHTML = `<span style="color: #667eea;">[${timestamp}]</span> <span style="color: ${typeColor};">${typeIcon} ${message}</span>`;
+            logEntry.style.marginBottom = '3px';
+            logEntry.style.padding = '2px 0';
+            logEntry.style.borderBottom = '1px solid rgba(255,255,255,0.05)';
+            
+            debugPanel.appendChild(logEntry);
+            debugPanel.scrollTop = debugPanel.scrollHeight;
+            
+            // Limit logs to 100 entries
+            if (debugPanel.children.length > 100) {
+                debugPanel.removeChild(debugPanel.firstChild);
+            }
+            
+            // Update debug stats
+            updateDebugStats();
+            
+            console.log(`[${type.toUpperCase()}] ${message}`);
+        }
+        
+        function updateDebugStats() {
+            const memory = performance.memory ? 
+                Math.round(performance.memory.usedJSHeapSize / 1024 / 1024) + 'MB' : 'N/A';
+            
+            document.getElementById('debugStats').innerHTML = 
+                `Clients: 1 | Memory: ${memory} | WS: ${isWebSocketConnected ? 'ON' : 'OFF'}`;
+        }
+        
+        // =================== LOADING SYSTEM ===================
+        function updateLoadingStatus(status, substatus = '') {
+            document.getElementById('loadingStatus').textContent = status;
+            if (substatus) {
+                document.getElementById('loadingSubstatus').textContent = substatus;
+            }
+        }
+        
+        function updateLoadingProgress(percent) {
+            document.getElementById('loadingProgress').style.width = percent + '%';
+        }
+        
+        // =================== INITIALIZATION ===================
+        async function initApplication() {
+            updateLoadingStatus('Initializing TradingView Monitor...', 'v2.0 with WebSocket');
+            updateLoadingProgress(10);
+            
+            logDebug('🚀 Initializing TradingView Monitor v2.0 with WebSocket', 'info');
+            
+            // Initialize systems step by step
+            updateLoadingStatus('Setting up time display...');
+            updateLoadingProgress(20);
+            initTimeDisplay();
+            
+            updateLoadingStatus('Initializing chart system...');
+            updateLoadingProgress(40);
+            await initChart();
+            
+            updateLoadingStatus('Setting up event listeners...');
+            updateLoadingProgress(60);
+            initEventListeners();
+            
+            updateLoadingStatus('Connecting to WebSocket server...');
+            updateLoadingProgress(80);
+            await initWebSocket();
+            
+            updateLoadingStatus('Starting data services...');
+            updateLoadingProgress(90);
+            setTimeout(() => {
+                updateDashboard();
+                startAutoRefresh();
+            }, 1000);
+            
+            // Hide loading overlay
+            setTimeout(() => {
+                document.getElementById('loadingOverlay').style.opacity = '0';
+                setTimeout(() => {
+                    document.getElementById('loadingOverlay').style.display = 'none';
+                    logDebug('✅ Application initialization complete', 'info');
+                }, 300);
+            }, 2000);
+            
+            updateLoadingProgress(100);
+        }
+        
+        function initTimeDisplay() {
+            function updateTime() {
+                const now = new Date();
+                document.getElementById('currentTime').textContent = 
+                    now.toLocaleTimeString('id-ID', { hour12: false });
+            }
+            updateTime();
+            setInterval(updateTime, 1000);
+        }
+        
+        function initEventListeners() {
+            // Debug panel toggle
+            document.getElementById('debugToggle').addEventListener('click', () => {
+                document.getElementById('debugPanel').classList.toggle('show');
+                logDebug('Debug panel toggled', 'info');
+            });
+            
+            document.getElementById('debugClose').addEventListener('click', () => {
+                document.getElementById('debugPanel').classList.remove('show');
+            });
+            
+            // Refresh button
+            document.getElementById('refreshIcon').addEventListener('click', () => {
+                updateDashboard();
+                logDebug('Manual refresh triggered', 'info');
+            });
+            
+            // Timeframe selector
+            document.querySelectorAll('.timeframe-selector .control-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.timeframe-selector .control-btn').forEach(b => {
+                        b.classList.remove('active');
+                    });
+                    this.classList.add('active');
+                    
+                    const newTimeframe = this.dataset.tf;
+                    currentTimeframe = newTimeframe;
+                    
+                    document.getElementById('timeframeValue').textContent = 
+                        getTimeframeLabel(newTimeframe);
+                    
+                    if (currentSymbol !== 'ALL') {
+                        if (isWebSocketConnected && socket) {
+                            socket.emit('timeframe_change', {
+                                symbol: currentSymbol,
+                                timeframe: newTimeframe
+                            });
+                            logDebug(`Requested ${newTimeframe} data for ${currentSymbol} via WebSocket`, 'info');
+                        } else {
+                            updateChartTimeframe(currentSymbol, newTimeframe);
+                        }
+                    }
+                    
+                    logDebug(`Timeframe changed to ${getTimeframeLabel(newTimeframe)}`, 'info');
+                });
+            });
+            
+            // Chart type selector
+            document.querySelectorAll('.chart-type-selector .control-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.chart-type-selector .control-btn').forEach(b => {
+                        b.classList.remove('active');
+                    });
+                    this.classList.add('active');
+                    
+                    currentChartType = this.dataset.type;
+                    changeChartType(currentChartType);
+                    
+                    logDebug(`Chart type changed to ${currentChartType}`, 'info');
+                });
+            });
+            
+            // Performance monitoring
+            setInterval(() => {
+                const now = Date.now();
+                updateRate = Math.round((messageCount / ((now - lastMessageTime) / 1000)) * 10) / 10;
+                document.getElementById('updateRate').textContent = `${updateRate} msgs/sec`;
+                messageCount = 0;
+                lastMessageTime = now;
+            }, 1000);
+        }
+        
+        // =================== WEBSOCKET SYSTEM ===================
+        async function initWebSocket() {
+            logDebug('Initializing WebSocket connection...', 'info');
+            
+            // Determine WebSocket URL based on environment
+            const isLocalhost = window.location.hostname === 'localhost' || 
+                              window.location.hostname === '127.0.0.1';
+            
+            let wsUrl;
+            if (isLocalhost) {
+                wsUrl = 'ws://localhost:3001';
+            } else {
+                // Use the same domain for WebSocket (adjust if your WS server is different)
+                const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+                wsUrl = `${protocol}//${window.location.host.replace('3000', '3001')}`;
+                
+                // Fallback URL (you should change this to your actual WebSocket server)
+                const fallbackUrl = 'wss://bb-scalper-ws.onrender.com'; // Example
+                wsUrl = fallbackUrl;
+            }
+            
+            logDebug(`Connecting to WebSocket: ${wsUrl}`, 'info');
+            
+            try {
+                socket = io(wsUrl, {
+                    transports: ['websocket', 'polling'],
+                    reconnection: true,
+                    reconnectionAttempts: MAX_WS_RECONNECTS,
+                    reconnectionDelay: 1000,
+                    reconnectionDelayMax: 10000,
+                    timeout: 30000,
+                    autoConnect: true,
+                    forceNew: true
+                });
+                
+                setupWebSocketHandlers();
+                
+            } catch (error) {
+                logDebug(`WebSocket initialization failed: ${error.message}`, 'error');
+                updateWebSocketStatus(false, 'Initialization failed');
+                fallbackToPolling();
+            }
+        }
+        
+        function setupWebSocketHandlers() {
+            // Connection established
+            socket.on('connect', () => {
+                logDebug('✅ WebSocket connected successfully', 'info');
+                isWebSocketConnected = true;
+                wsReconnectAttempts = 0;
+                updateWebSocketStatus(true);
+                
+                // Subscribe to current symbol if not ALL
+                if (currentSymbol && currentSymbol !== 'ALL') {
+                    socket.emit('subscribe', {
+                        symbol: currentSymbol,
+                        timeframe: currentTimeframe
+                    });
+                    logDebug(`Subscribed to ${currentSymbol} via WebSocket`, 'info');
+                }
+                
+                // Request initial data
+                socket.emit('get_initial_data', {
+                    symbols: defaultSymbols
+                });
+            });
+            
+            // Server welcome message
+            socket.on('connected', (data) => {
+                logDebug(`Server: ${data.message}`, 'info');
+                if (data.availableSymbols) {
+                    logDebug(`Available symbols: ${data.availableSymbols.join(', ')}`, 'info');
+                }
+            });
+            
+            // Real-time price updates
+            socket.on('price_update', (data) => {
+                messageCount++;
+                performanceStats.wsMessages++;
+                
+                if (data.symbol === currentSymbol && chart) {
+                    const latency = Date.now() - data.timestamp;
+                    document.getElementById('latencyValue').textContent = `${latency} ms`;
+                    document.getElementById('latencyValue').className = 
+                        `market-info-value ${latency < 100 ? 'positive' : latency < 300 ? 'neutral' : 'negative'}`;
+                    
+                    updateLivePrice(data.price, data.timestamp);
+                }
+            });
+            
+            // Candle updates
+            socket.on('candle_update', (data) => {
+                messageCount++;
+                
+                if (data.symbol === currentSymbol && chart) {
+                    updateChartWithCandleData(data.candles, data.timeframe);
+                }
+            });
+            
+            // Market data response
+            socket.on('market_data', (data) => {
+                if (data.symbol === currentSymbol) {
+                    realMarketData[data.symbol] = realMarketData[data.symbol] || {};
+                    realMarketData[data.symbol][data.timeframe] = data.data.candles;
+                    
+                    if (chart && data.data.candles) {
+                        const series = candlestickSeries || lineSeries || areaSeries;
+                        if (series) {
+                            series.setData(data.data.candles);
+                            chart.timeScale().fitContent();
+                            chart.timeScale().scrollToPosition(-1);
+                        }
+                    }
+                }
+            });
+            
+            // Historical data response
+            socket.on('historical_data', (data) => {
+                if (data.symbol === currentSymbol && data.timeframe === currentTimeframe) {
+                    realMarketData[data.symbol] = realMarketData[data.symbol] || {};
+                    realMarketData[data.symbol][data.timeframe] = data.candles;
+                    
+                    const series = candlestickSeries || lineSeries || areaSeries;
+                    if (series && data.candles) {
+                        series.setData(data.candles);
+                        chart.timeScale().fitContent();
+                        chart.timeScale().scrollToPosition(-1);
+                    }
+                }
+            });
+            
+            // Connection error
+            socket.on('connect_error', (error) => {
+                wsReconnectAttempts++;
+                logDebug(`WebSocket connection error (attempt ${wsReconnectAttempts}/${MAX_WS_RECONNECTS}): ${error.message}`, 'warning');
+                updateWebSocketStatus(false, `Reconnecting... (${wsReconnectAttempts}/${MAX_WS_RECONNECTS})`);
+                
+                if (wsReconnectAttempts >= MAX_WS_RECONNECTS) {
+                    logDebug('Max reconnection attempts reached. Falling back to polling.', 'error');
+                    fallbackToPolling();
+                }
+            });
+            
+            // Disconnection
+            socket.on('disconnect', (reason) => {
+                logDebug(`WebSocket disconnected: ${reason}`, 'warning');
+                isWebSocketConnected = false;
+                updateWebSocketStatus(false, reason === 'io server disconnect' ? 'Server disconnected' : 'Disconnected');
+                
+                if (reason === 'io server disconnect') {
+                    // Server initiated disconnect, try to reconnect
+                    setTimeout(() => {
+                        socket.connect();
+                    }, 5000);
+                }
+            });
+        }
+        
+        function updateWebSocketStatus(connected, message = '') {
+            const wsStatusElement = document.getElementById('wsStatus');
+            
+            if (connected) {
+                wsStatusElement.innerHTML = '<i class="fas fa-check-circle"></i> <span>WS: Connected</span>';
+                wsStatusElement.className = 'ws-status online';
+            } else {
+                wsStatusElement.innerHTML = `<i class="fas fa-times-circle"></i> <span>WS: ${message || 'Disconnected'}</span>`;
+                wsStatusElement.className = 'ws-status offline';
+            }
+        }
+        
+        function subscribeToSymbol(symbol, timeframe) {
+            if (!socket || !isWebSocketConnected) return;
+            
+            socket.emit('subscribe', {
+                symbol: symbol,
+                timeframe: timeframe
+            });
+            
+            logDebug(`Subscribed to real-time data for ${symbol} (${timeframe})`, 'info');
+        }
+        
+        function unsubscribeFromSymbol() {
+            if (!socket || !isWebSocketConnected) return;
+            
+            socket.emit('unsubscribe');
+            logDebug('Unsubscribed from real-time data', 'info');
+        }
+        
+        function fallbackToPolling() {
+            logDebug('Switching to polling mode', 'warning');
+            
+            // Clear WebSocket
+            if (socket) {
+                socket.disconnect();
+                socket = null;
+            }
+            
+            isWebSocketConnected = false;
+            updateWebSocketStatus(false, 'Polling mode');
+            
+            // Start polling interval
+            setInterval(() => {
+                if (currentSymbol && currentSymbol !== 'ALL') {
+                    fetchMarketDataViaAPI(currentSymbol, currentTimeframe);
+                }
+            }, 5000);
+            
+            logDebug('Polling mode activated', 'info');
+        }
+        
+        // =================== CHART SYSTEM ===================
+        async function initChart() {
+            logDebug('Initializing TradingView chart...', 'info');
+            
+            const chartContainer = document.getElementById('tradingChart');
+            
+            try {
+                chart = LightweightCharts.createChart(chartContainer, {
+                    width: chartContainer.clientWidth,
+                    height: 500,
+                    layout: {
+                        background: { color: '#0a0e17' },
+                        textColor: '#D9D9D9',
+                        fontSize: 12,
+                    },
+                    grid: {
+                        vertLines: { color: 'rgba(42, 46, 57, 0.5)' },
+                        horzLines: { color: 'rgba(42, 46, 57, 0.5)' },
+                    },
+                    crosshair: {
+                        mode: LightweightCharts.CrosshairMode.Normal,
+                        vertLine: {
+                            width: 1,
+                            color: 'rgba(101, 126, 234, 0.3)',
+                            style: LightweightCharts.LineStyle.Solid,
+                            labelBackgroundColor: '#667eea',
+                        },
+                        horzLine: {
+                            width: 1,
+                            color: 'rgba(101, 126, 234, 0.3)',
+                            labelBackgroundColor: '#667eea',
+                        },
+                    },
+                    rightPriceScale: {
+                        borderColor: 'rgba(42, 46, 57, 0.8)',
+                        scaleMargins: {
+                            top: 0.1,
+                            bottom: 0.1,
+                        },
+                        entireTextOnly: true,
+                    },
+                    timeScale: {
+                        borderColor: 'rgba(42, 46, 57, 0.8)',
+                        timeVisible: true,
+                        secondsVisible: false,
+                        rightOffset: 10,
+                        barSpacing: 6,
+                        minBarSpacing: 3,
+                    },
+                    handleScale: {
+                        mouseWheel: true,
+                        pinch: true,
+                        axisPressedMouseMove: true,
+                    },
+                    handleScroll: {
+                        mouseWheel: true,
+                        pressedMouseMove: true,
+                        horzTouchDrag: true,
+                        vertTouchDrag: true,
+                    },
+                });
+                
+                // Create initial candlestick series
+                candlestickSeries = chart.addCandlestickSeries({
+                    upColor: '#10b981',
+                    downColor: '#ef4444',
+                    borderDownColor: '#ef4444',
+                    borderUpColor: '#10b981',
+                    wickDownColor: '#ef4444',
+                    wickUpColor: '#10b981',
+                    priceFormat: {
+                        type: 'price',
+                        precision: 5,
+                        minMove: 0.00001,
+                    },
+                });
+                
+                // Set initial empty data
+                candlestickSeries.setData([]);
+                
+                // Handle window resize
+                window.addEventListener('resize', () => {
+                    chart.applyOptions({ width: chartContainer.clientWidth });
+                });
+                
+                logDebug('✅ TradingView chart initialized successfully', 'info');
+                
+            } catch (error) {
+                logDebug(`Failed to initialize chart: ${error.message}`, 'error');
+                throw error;
+            }
+        }
+        
+        function changeChartType(type) {
+            if (!chart) return;
+            
+            // Remove existing series
+            if (candlestickSeries) chart.removeSeries(candlestickSeries);
+            if (lineSeries) chart.removeSeries(lineSeries);
+            if (areaSeries) chart.removeSeries(areaSeries);
+            
+            candlestickSeries = null;
+            lineSeries = null;
+            areaSeries = null;
+            
+            // Create new series based on type
+            switch(type) {
+                case 'candlestick':
+                    candlestickSeries = chart.addCandlestickSeries({
+                        upColor: '#10b981',
+                        downColor: '#ef4444',
+                        borderDownColor: '#ef4444',
+                        borderUpColor: '#10b981',
+                        wickDownColor: '#ef4444',
+                        wickUpColor: '#10b981',
+                    });
+                    break;
+                    
+                case 'line':
+                    lineSeries = chart.addLineSeries({
+                        color: '#667eea',
+                        lineWidth: 2,
+                        crosshairMarkerVisible: true,
+                    });
+                    break;
+                    
+                case 'area':
+                    areaSeries = chart.addAreaSeries({
+                        topColor: 'rgba(102, 126, 234, 0.4)',
+                        bottomColor: 'rgba(102, 126, 234, 0.0)',
+                        lineColor: '#667eea',
+                        lineWidth: 2,
+                    });
+                    break;
+            }
+            
+            // Restore data if available
+            if (currentSymbol && currentSymbol !== 'ALL' && 
+                realMarketData[currentSymbol] && 
+                realMarketData[currentSymbol][currentTimeframe]) {
+                
+                const data = realMarketData[currentSymbol][currentTimeframe];
+                const series = candlestickSeries || lineSeries || areaSeries;
+                
+                if (series) {
+                    series.setData(data);
+                    chart.timeScale().fitContent();
+                    chart.timeScale().scrollToPosition(-1);
+                }
+            }
+        }
+        
+        // =================== LIVE PRICE UPDATES ===================
+        function updateLivePrice(price, timestamp) {
+            if (!currentSymbol || currentSymbol === 'ALL') return;
+            
+            // Update price display
+            const priceElement = document.getElementById('currentPrice');
+            const lastPrice = parseFloat(priceElement.dataset.lastPrice || price);
+            const change = price - lastPrice;
+            const changePercent = (change / lastPrice) * 100;
+            
+            priceElement.textContent = price.toFixed(5);
+            priceElement.dataset.lastPrice = price;
+            
+            // Animate price change
+            if (Math.abs(change) > 0.00001) {
+                priceElement.classList.remove('price-up', 'price-down');
+                priceElement.classList.add(change >= 0 ? 'price-up' : 'price-down');
+                
+                priceElement.style.color = change >= 0 ? '#10b981' : '#ef4444';
+                priceElement.style.fontWeight = 'bold';
+                
+                setTimeout(() => {
+                    priceElement.style.color = '#fff';
+                    priceElement.style.fontWeight = 'normal';
+                }, 1000);
+            }
+            
+            // Update bid/ask
+            const spread = getSpreadForSymbol(currentSymbol);
+            const bid = price * (1 - spread/2);
+            const ask = price * (1 + spread/2);
+            
+            document.getElementById('bidAsk').textContent = 
+                `${bid.toFixed(5)} / ${ask.toFixed(5)}`;
+            document.getElementById('spreadValue').textContent = 
+                `${(spread * 10000).toFixed(1)} pips`;
+            
+            // Update daily change
+            const changeElement = document.getElementById('dailyChange');
+            changeElement.textContent = `${changePercent >= 0 ? '+' : ''}${changePercent.toFixed(3)}%`;
+            changeElement.className = `market-info-value ${changePercent >= 0 ? 'positive' : 'negative'}`;
+            
+            // Update last candle in chart
+            updateLastCandlePrice(price, timestamp);
+            
+            // Update message count
+            document.getElementById('messageCount').textContent = 
+                parseInt(document.getElementById('messageCount').textContent || 0) + 1;
+        }
+        
+        function updateLastCandlePrice(price, timestamp) {
+            const series = candlestickSeries || lineSeries || areaSeries;
+            if (!series) return;
+            
+            const data = series.data();
+            if (data.length === 0) return;
+            
+            const lastCandle = data[data.length - 1];
+            const now = timestamp ? new Date(timestamp) : new Date();
+            const candleTime = Math.floor(now.getTime() / 1000);
+            
+            // Only update if it's the same candle (same timeframe)
+            if (Math.floor(lastCandle.time / 60) === Math.floor(candleTime / 60)) {
+                const updatedCandle = {
+                    ...lastCandle,
+                    time: lastCandle.time, // Keep original time
+                    high: Math.max(lastCandle.high, price),
+                    low: Math.min(lastCandle.low, price),
+                    close: price,
+                    volume: lastCandle.volume + Math.random() * 0.1
+                };
+                
+                series.update(updatedCandle);
+                performanceStats.chartUpdates++;
+            }
+        }
+        
+        function updateChartWithCandleData(candles, timeframe) {
+            if (timeframe !== currentTimeframe) return;
+            
+            const series = candlestickSeries || lineSeries || areaSeries;
+            if (!series) return;
+            
+            if (candles && candles.length > 0) {
+                const lastCandle = candles[candles.length - 1];
+                const currentData = series.data();
+                
+                // Update or add candle
+                if (currentData.length === 0) {
+                    series.setData(candles);
+                } else {
+                    const existingIndex = currentData.findIndex(c => c.time === lastCandle.time);
+                    if (existingIndex !== -1) {
+                        // Update existing candle
+                        series.update(lastCandle);
+                    } else {
+                        // Add new candle
+                        series.update(lastCandle);
+                    }
+                }
+                
+                // Auto-scroll to show latest data
+                chart.timeScale().scrollToPosition(-1);
+            }
+        }
+        
+        // =================== DATA FETCHING ===================
+        async function updateDashboard() {
+            logDebug('Fetching dashboard data...', 'info');
+            performanceStats.apiCalls++;
+            
+            try {
+                const startTime = Date.now();
+                const response = await fetch(`/api/get_all_symbols.js?t=${Date.now()}`);
+                
+                const ping = Date.now() - startTime;
+                document.getElementById('pingTime').textContent = `${ping} ms`;
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                logDebug(`Data received: ${Object.keys(data).length} symbols`, 'info');
+                
+                if (data.status === 'error' || data.status === 'no_data' || data.status === 'exception') {
+                    updateConnectionStatus(false, data.message);
+                    logDebug(`API error: ${data.message}`, 'warning');
+                    return;
+                }
+                
+                allData = data;
+                updateSymbolSelector(Object.keys(data));
+                
+                // Auto-select symbol if needed
+                if (currentSymbol === 'ALL' && Object.keys(data).length > 0) {
+                    const symbolsWithTrades = Object.keys(data).filter(s => 
+                        data[s].open_trades > 0 || (data[s].trades && data[s].trades.length > 0)
+                    );
+                    
+                    if (symbolsWithTrades.length > 0) {
+                        const newSymbol = symbolsWithTrades[0];
+                        if (newSymbol !== currentSymbol) {
+                            switchSymbol(newSymbol);
+                        }
+                    } else if (Object.keys(data).length > 0) {
+                        const newSymbol = Object.keys(data)[0];
+                        if (newSymbol !== currentSymbol) {
+                            switchSymbol(newSymbol);
+                        }
+                    }
+                }
+                
+                showSymbolData(currentSymbol);
+                updateConnectionStatus(true);
+                
+                logDebug('Dashboard update complete', 'info');
+                
+            } catch (error) {
+                updateConnectionStatus(false, error.message);
+                logDebug(`Fetch error: ${error.message}`, 'error');
+            }
+        }
+        
+        async function fetchMarketDataViaAPI(symbol, timeframe) {
+            try {
+                const tfMap = {
+                    '1': '1m', '5': '5m', '15': '15m',
+                    '60': '1h', '240': '4h', 'D': '1d'
+                };
+                
+                const response = await fetch(
+                    `/api/market_data.js?symbol=${symbol}&timeframe=${tfMap[timeframe]}&limit=100`
+                );
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    
+                    if (data && data.length > 0) {
+                        const series = candlestickSeries || lineSeries || areaSeries;
+                        if (series) {
+                            series.setData(data);
+                            chart.timeScale().fitContent();
+                            chart.timeScale().scrollToPosition(-1);
+                            
+                            // Update last price
+                            const lastCandle = data[data.length - 1];
+                            updateLivePrice(lastCandle.close, Date.now());
+                        }
+                    }
+                }
+            } catch (error) {
+                logDebug(`Polling fetch failed: ${error.message}`, 'warning');
+            }
+        }
+        
+        // =================== SYMBOL MANAGEMENT ===================
+        function updateSymbolSelector(symbols) {
+            const selector = document.getElementById('symbolSelector');
+            
+            // Clear existing symbols (keep ALL button)
+            const allBtn = selector.querySelector('[data-symbol="ALL"]');
+            selector.innerHTML = '';
+            selector.appendChild(allBtn);
+            
+            // Add symbol buttons
+            symbols.forEach(symbol => {
+                const hasTrades = allData[symbol] && 
+                    (allData[symbol].open_trades > 0 || 
+                     (allData[symbol].trades && allData[symbol].trades.length > 0));
+                
+                const btn = document.createElement('button');
+                btn.className = `symbol-btn ${currentSymbol === symbol ? 'active' : ''}`;
+                btn.dataset.symbol = symbol;
+                btn.innerHTML = symbol;
+                
+                if (hasTrades) {
+                    const badge = document.createElement('span');
+                    badge.className = 'trade-badge';
+                    badge.textContent = allData[symbol].open_trades || allData[symbol].trades?.length || '!';
+                    btn.appendChild(badge);
+                }
+                
+                btn.addEventListener('click', () => switchSymbol(symbol));
+                selector.appendChild(btn);
+            });
+        }
+        
+        function switchSymbol(symbol) {
+            // Unsubscribe from previous symbol
+            if (currentSymbol && currentSymbol !== 'ALL' && isWebSocketConnected) {
+                unsubscribeFromSymbol();
+            }
+            
+            currentSymbol = symbol;
+            
+            // Update button states
+            document.querySelectorAll('.symbol-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.symbol === symbol);
+            });
+            
+            // Update UI
+            showSymbolData(symbol);
+            
+            // Subscribe to new symbol via WebSocket
+            if (symbol !== 'ALL' && isWebSocketConnected) {
+                subscribeToSymbol(symbol, currentTimeframe);
+            }
+            
+            logDebug(`Switched to symbol: ${symbol}`, 'info');
+        }
+        
+        // =================== UI UPDATES ===================
+        function showSymbolData(symbol) {
+            const data = symbol === 'ALL' ? aggregateAllData() : allData[symbol];
+            
+            if (!data) {
+                logDebug(`No data for symbol: ${symbol}`, 'warning');
+                document.getElementById('chartTitle').innerHTML = 
+                    '<i class="fas fa-chart-candlestick"></i> <span>📈 NO DATA AVAILABLE</span>';
+                return;
+            }
+            
+            // Update stats
+            updateStats(data);
+            
+            // Update trades list
+            updateTradesList(data.trades || []);
+            
+            // Update timestamp
+            if (data.timestamp) {
+                const date = new Date(data.timestamp * 1000);
+                document.getElementById('lastUpdate').textContent = 
+                    date.toLocaleTimeString('id-ID', { hour12: false });
+            }
+            
+            // Update chart if not ALL
+            if (symbol !== 'ALL') {
+                updateChartForSymbol(symbol, data);
+            }
+        }
+        
+        function updateStats(data) {
+            const equity = parseFloat(data.equity) || 0;
+            const balance = parseFloat(data.balance) || 0;
+            const profit = parseFloat(data.profit) || 0;
+            const profitPips = parseFloat(data.total_profit_pips) || 0;
+            const mlConfidence = parseFloat(data.ml_confidence) || 0;
+            const mlTrained = parseInt(data.ml_trained) || 0;
+            const openTrades = parseInt(data.open_trades) || 0;
+            
+            // Equity
+            document.getElementById('equity').textContent = `$${equity.toFixed(2)}`;
+            document.getElementById('equity').className = `stat-value ${equity >= balance ? 'positive' : 'negative'}`;
+            
+            const equityChange = equity - balance;
+            const equityIcon = equityChange >= 0 ? 'fa-arrow-up' : 'fa-arrow-down';
+            document.getElementById('equityChange').innerHTML = 
+                `<i class="fas ${equityIcon}"></i> $${Math.abs(equityChange).toFixed(2)}`;
+            
+            // Balance
+            document.getElementById('balance').textContent = `$${balance.toFixed(2)}`;
+            
+            // Profit
+            document.getElementById('profit').textContent = `$${profit.toFixed(2)}`;
+            document.getElementById('profit').className = `stat-value ${profit >= 0 ? 'positive' : 'negative'}`;
+            document.getElementById('profitPips').innerHTML = 
+                `<i class="fas fa-arrows-alt-h"></i> ${profitPips.toFixed(1)} pips`;
+            
+            // Open Trades
+            document.getElementById('openTrades').textContent = openTrades;
+            
+            // ML Confidence
+            document.getElementById('mlConfidence').textContent = `${mlConfidence.toFixed(1)}%`;
+            document.getElementById('mlConfidence').className = `stat-value ${mlConfidence >= 60 ? 'positive' : mlConfidence >= 40 ? 'neutral' : 'negative'}`;
+            document.getElementById('mlTrained').innerHTML = 
+                `<i class="fas fa-graduation-cap"></i> Trained: ${mlTrained}x`;
+        }
+        
+        function updateChartForSymbol(symbol, data) {
+            if (!chart) return;
+            
+            // Update chart title
+            const currentPrice = parseFloat(data.current_price) || 0;
+            const changePercent = data.daily_change || 0;
+            const changeEmoji = changePercent >= 0 ? '📈' : '📉';
+            
+            document.getElementById('chartTitle').innerHTML = `
+                <i class="fas fa-chart-candlestick"></i>
+                <span>${changeEmoji} ${symbol} • ${getTimeframeLabel(currentTimeframe)} • $${currentPrice.toFixed(2)} 
+                <span id="liveChangeIndicator" style="color:${changePercent >= 0 ? '#10b981' : '#ef4444'}; font-size: 14px;">${changePercent >= 0 ? '+' : ''}${changePercent.toFixed(2)}%</span></span>
+            `;
+            
+            // If no WebSocket, fetch initial data
+            if (!isWebSocketConnected && !realMarketData[symbol]?.[currentTimeframe]) {
+                fetchMarketDataViaAPI(symbol, currentTimeframe);
+            }
+        }
+        
+        // =================== TRADES LIST ===================
+        function updateTradesList(trades) {
+            const list = document.getElementById('tradesList');
+            
+            if (!trades || trades.length === 0) {
+                list.innerHTML = `
+                    <div class="no-trades">
+                        <i class="fas fa-box-open" style="font-size: 24px; margin-bottom: 10px;"></i><br>
+                        No active trades found
+                    </div>
+                `;
+                document.getElementById('tradeCount').textContent = '(0 trades)';
+                return;
+            }
+            
+            // Sort by profit (highest first)
+            trades.sort((a, b) => {
+                const profitA = a.profit_usd || a.profit || 0;
+                const profitB = b.profit_usd || b.profit || 0;
+                return profitB - profitA;
+            });
+            
+            // Update count
+            document.getElementById('tradeCount').textContent = `(${trades.length} trades)`;
+            
+            // Clear and rebuild list
+            list.innerHTML = '';
+            
+            trades.forEach(trade => {
+                const profitUsd = trade.profit_usd || trade.profit || 0;
+                const profitPips = trade.profit_pips || 0;
+                const tradeType = trade.type || 'BUY';
+                const profitClass = profitUsd >= 0 ? 'positive' : 'negative';
+                const typeClass = tradeType.toLowerCase();
+                
+                const item = document.createElement('div');
+                item.className = `trade-item ${typeClass}`;
+                item.innerHTML = `
+                    <div class="trade-type ${typeClass}">${tradeType}</div>
+                    <div class="trade-details">
+                        <div class="main">#${trade.ticket || 'N/A'} | ${trade.lots || '0'} lots | ${trade.symbol || currentSymbol}</div>
+                        <div class="sub">
+                            <span>Entry: ${trade.open_price || '─'}</span>
+                            <span>Current: ${trade.current_price || '─'}</span>
+                            <span>SL: ${trade.sl || '─'}</span>
+                            <span>TP: ${trade.tp || '─'}</span>
+                        </div>
+                    </div>
+                    <div class="trade-profit ${profitClass}">
+                        <div class="pips">${profitPips >= 0 ? '+' : ''}${profitPips.toFixed(1)} pips</div>
+                        <div class="usd">${profitUsd >= 0 ? '+' : ''}$${Math.abs(profitUsd).toFixed(2)}</div>
+                    </div>
+                `;
+                list.appendChild(item);
+            });
+        }
+        
+        // =================== CONNECTION STATUS ===================
+        function updateConnectionStatus(connected, errorMsg = '') {
+            const statusBadge = document.getElementById('statusBadge');
+            const connectionStatus = document.getElementById('connectionStatus');
+            
+            if (connected) {
+                statusBadge.innerHTML = '<i class="fas fa-check-circle"></i> ONLINE';
+                statusBadge.className = 'status-badge online';
+                connectionStatus.textContent = 'ONLINE';
+                connectionStatus.className = 'stat-value positive';
+                isConnected = true;
+                consecutiveErrors = 0;
+                
+                if (!connectionStart) connectionStart = Date.now();
+                
+            } else {
+                consecutiveErrors++;
+                statusBadge.innerHTML = consecutiveErrors > 3 ? 
+                    '<i class="fas fa-times-circle"></i> OFFLINE' : 
+                    '<i class="fas fa-sync-alt fa-spin"></i> RECONNECTING...';
+                
+                statusBadge.className = 'status-badge ' + (consecutiveErrors > 3 ? 'offline' : 'connecting');
+                connectionStatus.textContent = consecutiveErrors > 3 ? 'OFFLINE' : 'RETRY';
+                connectionStatus.className = 'stat-value ' + (consecutiveErrors > 3 ? 'negative' : 'neutral');
+                isConnected = false;
+                
+                if (errorMsg) {
+                    logDebug(`Connection error: ${errorMsg}`, 'warning');
+                }
+            }
+            
+            // Update uptime
+            if (connectionStart) {
+                const uptime = Math.floor((Date.now() - connectionStart) / 1000);
+                const hours = Math.floor(uptime / 3600);
+                const minutes = Math.floor((uptime % 3600) / 60);
+                const seconds = uptime % 60;
+                let uptimeText = '';
+                
+                if (hours > 0) uptimeText += hours + 'h ';
+                if (minutes > 0 || hours > 0) uptimeText += minutes + 'm ';
+                uptimeText += seconds + 's';
+                
+                document.getElementById('connectionUptime').innerHTML = 
+                    `<i class="fas fa-clock"></i> Uptime: ${uptimeText}`;
+                document.getElementById('uptimeFooter').textContent = uptimeText;
+            }
+        }
+        
+        // =================== UTILITY FUNCTIONS ===================
+        function aggregateAllData() {
+            let total = {
+                equity: 0, balance: 0, profit: 0, total_profit_pips: 0,
+                open_trades: 0, trades: [], timestamp: 0, ml_confidence: 0,
+                ml_trained: 0, current_price: null, bid_price: null, ask_price: null,
+                spread: null, daily_change: 0
+            };
+            
+            if (Object.keys(allData).length === 0) return total;
+            
+            Object.values(allData).forEach(d => {
+                total.equity += parseFloat(d.equity) || 0;
+                total.balance += parseFloat(d.balance) || 0;
+                total.profit += parseFloat(d.profit) || 0;
+                total.total_profit_pips += parseFloat(d.total_profit_pips) || 0;
+                total.open_trades += parseInt(d.open_trades) || 0;
+                
+                if (d.trades && Array.isArray(d.trades)) {
+                    total.trades = total.trades.concat(d.trades);
+                }
+                
+                if (d.timestamp > total.timestamp) {
+                    total.timestamp = d.timestamp;
+                    total.current_price = d.current_price;
+                    total.bid_price = d.bid_price;
+                    total.ask_price = d.ask_price;
+                    total.spread = d.spread;
+                    total.daily_change = d.daily_change || 0;
+                }
+            });
+            
+            // Calculate averages
+            if (Object.keys(allData).length > 0) {
+                total.ml_confidence = Object.values(allData).reduce((sum, d) => 
+                    sum + (parseFloat(d.ml_confidence) || 0), 0) / Object.keys(allData).length;
+                total.ml_trained = Object.values(allData).reduce((sum, d) => 
+                    sum + (parseInt(d.ml_trained) || 0), 0);
+            }
+            
+            return total;
+        }
+        
+        function getTimeframeLabel(tf) {
+            const labels = {
+                '1': '1 Minute', '5': '5 Minutes', '15': '15 Minutes',
+                '60': '1 Hour', '240': '4 Hours', 'D': '1 Day'
+            };
+            return labels[tf] || `${tf} Minute${tf !== '1' ? 's' : ''}`;
+        }
+        
+        function updateChartTimeframe(symbol, timeframe) {
+            // In a real implementation, this would fetch new data
+            if (symbol && symbol !== 'ALL') {
+                const currentData = allData[symbol];
+                const currentPrice = parseFloat(currentData?.current_price) || 0;
+                
+                if (!isWebSocketConnected) {
+                    fetchMarketDataViaAPI(symbol, timeframe);
+                }
+            }
+        }
+        
+        function getSpreadForSymbol(symbol) {
+            const spreadMap = {
+                'XAUUSD': 0.0002,  // 2 pips
+                'EURUSD': 0.00001, // 0.1 pips
+                'GBPUSD': 0.00002,
+                'USDJPY': 0.00002,
+                'BTCUSD': 0.0005,  // 5 pips
+                'ETHUSD': 0.0008,  // 8 pips
+            };
+            return spreadMap[symbol] || 0.00005;
+        }
+        
+        function startAutoRefresh() {
+            let seconds = 5;
+            
+            refreshTimer = setInterval(() => {
+                seconds--;
+                document.getElementById('refreshTimer').textContent = `${seconds}s`;
+                
+                if (seconds <= 0) {
+                    if (!isWebSocketConnected) {
+                        updateDashboard();
+                    }
+                    seconds = 5;
+                }
+            }, 1000);
+        }
+        
+        // =================== INITIALIZE APP ===================
+        document.addEventListener('DOMContentLoaded', initApplication);
+        
+        // Performance cleanup every 5 minutes
+        setInterval(() => {
+            performanceStats = {
+                chartUpdates: 0,
+                wsMessages: 0,
+                apiCalls: 0,
+                lastCleanup: Date.now()
+            };
+            logDebug('Performance stats cleared', 'info');
+        }, 300000);
+    </script>
+</body>
+</html>

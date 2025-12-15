@@ -602,75 +602,22 @@
         
         /* =================== RESPONSIVE =================== */
         @media (max-width: 768px) {
-            .header {
-                padding: 15px;
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 10px;
-            }
-            
-            .stats-grid {
-                grid-template-columns: repeat(2, 1fr);
-                margin: 10px;
-                gap: 10px;
-            }
-            
-            .chart-controls {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 10px;
-            }
-            
-            .market-info {
-                width: 100%;
-                justify-content: space-between;
-            }
-            
-            .trade-item {
-                grid-template-columns: 1fr;
-                text-align: center;
-                gap: 10px;
-            }
-            
-            .trade-details .sub {
-                justify-content: center;
-                flex-wrap: wrap;
-                gap: 10px;
-            }
-            
-            .trade-profit {
-                text-align: center;
-            }
-            
-            .symbol-selector-container,
-            .chart-container,
-            .trades-panel {
-                margin: 10px;
-            }
-            
-            .footer-stats {
-                gap: 15px;
-            }
+            .header { padding: 15px; flex-direction: column; align-items: flex-start; gap: 10px; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); margin: 10px; gap: 10px; }
+            .chart-controls { flex-direction: column; align-items: flex-start; gap: 10px; }
+            .market-info { width: 100%; justify-content: space-between; }
+            .trade-item { grid-template-columns: 1fr; text-align: center; gap: 10px; }
+            .trade-details .sub { justify-content: center; flex-wrap: wrap; gap: 10px; }
+            .trade-profit { text-align: center; }
+            .symbol-selector-container, .chart-container, .trades-panel { margin: 10px; }
+            .footer-stats { gap: 15px; }
         }
         
         @media (max-width: 480px) {
-            .stats-grid {
-                grid-template-columns: 1fr;
-            }
-            
-            .market-info {
-                flex-direction: column;
-                gap: 10px;
-            }
-            
-            .chart-title {
-                font-size: 16px;
-            }
-            
-            .footer-stats {
-                flex-direction: column;
-                gap: 10px;
-            }
+            .stats-grid { grid-template-columns: 1fr; }
+            .market-info { flex-direction: column; gap: 10px; }
+            .chart-title { font-size: 16px; }
+            .footer-stats { flex-direction: column; gap: 10px; }
         }
         
         /* =================== ANIMATIONS =================== */
@@ -691,17 +638,13 @@
             100% { background-color: transparent; }
         }
         
-        .price-up {
-            animation: priceUp 1s ease;
-        }
-        
-        .price-down {
-            animation: priceDown 1s ease;
-        }
+        .price-up { animation: priceUp 1s ease; }
+        .price-down { animation: priceDown 1s ease; }
     </style>
 </head>
 <body>
-    <!-- Loading Overlay -->
+
+<!-- Loading Overlay -->
     <div class="loading-overlay" id="loadingOverlay">
         <div class="loading-spinner"></div>
         <div style="color: #667eea; font-weight: 600; margin-bottom: 10px; text-align: center;">
@@ -758,7 +701,6 @@
             <button class="symbol-btn active" data-symbol="ALL">
                 <i class="fas fa-chart-bar"></i> ALL INSTRUMENTS
             </button>
-            <!-- Symbols will be added dynamically -->
         </div>
     </div>
     
@@ -956,18 +898,17 @@
     </div>
     
     <script>
-        // =================== GLOBAL VARIABLES ===================
+	
+	// =================== GLOBAL VARIABLES ===================
         let chart = null;
         let candlestickSeries = null;
         let lineSeries = null;
         let areaSeries = null;
-        let priceLines = [];
         let currentSymbol = 'ALL';
         let allData = {};
         let connectionStart = null;
         let isConnected = false;
         let consecutiveErrors = 0;
-        let chartHistory = {};
         let realMarketData = {};
         let currentTimeframe = '1';
         let currentChartType = 'candlestick';
@@ -991,7 +932,6 @@
             debugPanel.appendChild(logEntry);
             debugPanel.scrollTop = debugPanel.scrollHeight;
             
-            // Limit logs to 100 entries
             if (debugPanel.children.length > 100) {
                 debugPanel.removeChild(debugPanel.firstChild);
             }
@@ -1022,32 +962,13 @@
             }
         }
         
-        // =================== STORE REAL PRICE ===================
-        function storeRealPrice(price) {
-            const priceElement = document.getElementById('currentPrice');
-            if (priceElement && price) {
-                priceElement.dataset.lastPrice = price;
-                
-                // Update chart jika sedang melihat symbol yang sama - pakai smooth update
-                if (currentSymbol !== 'ALL') {
-                    const currentData = allData[currentSymbol];
-                    if (currentData && currentData.current_price !== price) {
-                        // Update data dengan harga baru
-                        currentData.current_price = price;
-                        smoothUpdateChartPrice(currentSymbol, price);
-                    }
-                }
-            }
-        }
-        
         // =================== INITIALIZATION ===================
         async function initApplication() {
-            updateLoadingStatus('Initializing TradingView Monitor...', 'v2.0 - Smooth Chart');
+            updateLoadingStatus('Initializing TradingView Monitor...', 'v2.0 - Fixed Chart');
             updateLoadingProgress(10);
             
-            logDebug('🚀 Initializing TradingView Monitor v2.0 - Smooth Chart Update', 'info');
+            logDebug('🚀 Initializing TradingView Monitor v2.0 - FIXED', 'info');
             
-            // Initialize systems step by step
             updateLoadingStatus('Setting up time display...');
             updateLoadingProgress(20);
             initTimeDisplay();
@@ -1067,7 +988,6 @@
             updateLoadingStatus('Ready!');
             updateLoadingProgress(100);
             
-            // Hide loading overlay
             setTimeout(() => {
                 hideLoadingOverlay();
             }, 1500);
@@ -1084,7 +1004,6 @@
         }
         
         function initEventListeners() {
-            // Debug panel toggle
             document.getElementById('debugToggle').addEventListener('click', () => {
                 document.getElementById('debugPanel').classList.toggle('show');
                 logDebug('Debug panel toggled', 'info');
@@ -1094,13 +1013,11 @@
                 document.getElementById('debugPanel').classList.remove('show');
             });
             
-            // Refresh button
             document.getElementById('refreshIcon').addEventListener('click', () => {
                 updateDashboard();
                 logDebug('Manual refresh triggered', 'info');
             });
             
-            // Timeframe selector
             document.querySelectorAll('.timeframe-selector .control-btn').forEach(btn => {
                 btn.addEventListener('click', function() {
                     document.querySelectorAll('.timeframe-selector .control-btn').forEach(b => {
@@ -1122,7 +1039,6 @@
                 });
             });
             
-            // Chart type selector
             document.querySelectorAll('.chart-type-selector .control-btn').forEach(btn => {
                 btn.addEventListener('click', function() {
                     document.querySelectorAll('.chart-type-selector .control-btn').forEach(b => {
@@ -1137,12 +1053,10 @@
                 });
             });
             
-            // Symbol selector event delegation
             initSymbolSelectorEvents();
         }
         
         function initSymbolSelectorEvents() {
-            // Event delegation untuk symbol buttons
             document.getElementById('symbolSelector').addEventListener('click', (e) => {
                 const symbolBtn = e.target.closest('.symbol-btn');
                 if (symbolBtn) {
@@ -1156,7 +1070,6 @@
         
         // =================== DATA POLLING SYSTEM ===================
         function startDataPolling() {
-            // Start countdown timer
             let seconds = 5;
             
             refreshTimer = setInterval(() => {
@@ -1170,7 +1083,6 @@
                 }
             }, 1000);
             
-            // Initial load
             setTimeout(() => {
                 updateDashboard();
             }, 1000);
@@ -1178,7 +1090,7 @@
             logDebug('Polling system started (5s interval)', 'info');
         }
         
-        // =================== CHART SYSTEM (SMOOTH UPDATE) ===================
+        // =================== CHART SYSTEM (FIXED) ===================
         async function initChart() {
             logDebug('Initializing TradingView chart...', 'info');
             
@@ -1213,10 +1125,7 @@
                     },
                     rightPriceScale: {
                         borderColor: 'rgba(42, 46, 57, 0.8)',
-                        scaleMargins: {
-                            top: 0.1,
-                            bottom: 0.1,
-                        },
+                        scaleMargins: { top: 0.1, bottom: 0.1 },
                         entireTextOnly: true,
                     },
                     timeScale: {
@@ -1242,7 +1151,6 @@
                     },
                 });
                 
-                // Create initial candlestick series
                 candlestickSeries = chart.addCandlestickSeries({
                     upColor: '#10b981',
                     downColor: '#ef4444',
@@ -1255,13 +1163,11 @@
                         precision: 5,
                         minMove: 0.00001,
                     },
-                    priceLineVisible: false, // MATIKAN PRICE LINE AGAR TIDAK DOUBLE
+                    priceLineVisible: false,
                 });
                 
-                // Set initial empty data
                 candlestickSeries.setData([]);
                 
-                // Handle window resize
                 window.addEventListener('resize', () => {
                     chart.applyOptions({ width: chartContainer.clientWidth });
                 });
@@ -1277,7 +1183,6 @@
         function changeChartType(type) {
             if (!chart) return;
             
-            // Remove existing series
             if (candlestickSeries) chart.removeSeries(candlestickSeries);
             if (lineSeries) chart.removeSeries(lineSeries);
             if (areaSeries) chart.removeSeries(areaSeries);
@@ -1286,7 +1191,6 @@
             lineSeries = null;
             areaSeries = null;
             
-            // Create new series based on type
             switch(type) {
                 case 'candlestick':
                     candlestickSeries = chart.addCandlestickSeries({
@@ -1320,7 +1224,6 @@
                     break;
             }
             
-            // Restore data if available
             if (currentSymbol && currentSymbol !== 'ALL' && 
                 realMarketData[currentSymbol] && 
                 realMarketData[currentSymbol][currentTimeframe]) {
@@ -1336,100 +1239,68 @@
             }
         }
         
-        // =================== CHART FUNCTIONS (SMOOTH UPDATE) ===================
-        function updateChartForSymbol(symbol, data) {
-            if (!chart) return;
-            
-            // Update chart title dengan harga REAL dari EA
-            const currentPrice = parseFloat(data.current_price) || 0;
-            const bidPrice = parseFloat(data.bid_price) || (currentPrice - 0.0001);
-            const askPrice = parseFloat(data.ask_price) || (currentPrice + 0.0001);
-            const spread = parseInt(data.spread) || 10;
-            
-            // Calculate daily change based on current price
-            const basePrice = getBasePriceForSymbol(symbol);
-            const dailyChange = ((currentPrice - basePrice) / basePrice) * 100;
-            const changeEmoji = dailyChange >= 0 ? '📈' : '📉';
-            
-            document.getElementById('chartTitle').innerHTML = `
-                <i class="fas fa-chart-candlestick"></i>
-                <span>${changeEmoji} ${symbol} • ${getTimeframeLabel(currentTimeframe)} • $${currentPrice.toFixed(5)} 
-                <span id="liveChangeIndicator" style="color:${dailyChange >= 0 ? '#10b981' : '#ef4444'}; font-size: 14px;">${dailyChange >= 0 ? '+' : ''}${dailyChange.toFixed(3)}%</span></span>
-            `;
-            
-            // Update market info dengan harga REAL
-            document.getElementById('currentPrice').textContent = currentPrice.toFixed(5);
-            document.getElementById('bidAsk').textContent = `${bidPrice.toFixed(5)} / ${askPrice.toFixed(5)}`;
-            document.getElementById('spreadValue').textContent = `${spread} pips`;
-            document.getElementById('dailyChange').textContent = `${dailyChange >= 0 ? '+' : ''}${dailyChange.toFixed(3)}%`;
-            document.getElementById('dailyChange').className = `market-info-value ${dailyChange >= 0 ? 'positive' : 'negative'}`;
-            
-            // Update chart dengan harga real - SMOOTH UPDATE
-            smoothUpdateChartPrice(symbol, currentPrice);
-        }
-        
+        // =================== FIXED CHART UPDATE FUNCTION ===================
         function smoothUpdateChartPrice(symbol, currentPrice) {
             if (!currentPrice || currentPrice === 0) {
                 logDebug(`No valid price for ${symbol}`, 'warning');
                 return;
             }
             
-            // Cek apakah sudah ada data untuk symbol/timeframe ini
             if (!realMarketData[symbol]) realMarketData[symbol] = {};
             
             let existingData = realMarketData[symbol][currentTimeframe];
             
             if (!existingData || existingData.length === 0) {
-                // Generate data baru jika belum ada
                 generateInitialChartData(symbol, currentPrice);
                 return;
             }
             
-            // Ambil candle terakhir
+            // PERBAIKAN UTAMA: Ambil candle terakhir
             let lastCandle = existingData[existingData.length - 1];
             const currentTime = Math.floor(Date.now() / 1000);
             const tfMinutes = getTimeframeMinutes(currentTimeframe);
-            const candleEndTime = lastCandle.time + (tfMinutes * 60);
             
-            // Cek apakah masih dalam timeframe candle yang sama
+            // PERBAIKAN: Hitung waktu mulai candle (rounded ke timeframe)
+            const candleStartTime = Math.floor(lastCandle.time / (tfMinutes * 60)) * (tfMinutes * 60);
+            const candleEndTime = candleStartTime + (tfMinutes * 60);
+            
+            // Cek apakah masih dalam timeframe yang sama
             if (currentTime < candleEndTime) {
-                // UPDATE CANDLE YANG SAMA (SMOOTH)
+                // UPDATE CANDLE YANG SAMA (SMOOTH) - FIXED
                 const updatedCandle = {
-                    time: lastCandle.time,
+                    time: candleStartTime, // PENTING: Gunakan start time yang sama
                     open: lastCandle.open,
                     high: Math.max(lastCandle.high, currentPrice),
                     low: Math.min(lastCandle.low, currentPrice),
-                    close: currentPrice,
-                    volume: lastCandle.volume + 1 // Tambah volume sedikit
+                    close: currentPrice
                 };
                 
-                // Update data
+                // Update array
                 existingData[existingData.length - 1] = updatedCandle;
                 
-                // Update chart dengan smooth animation
+                // Update chart TANPA membuat candle baru
                 const series = candlestickSeries || lineSeries || areaSeries;
                 if (series) {
                     series.update(updatedCandle);
                 }
                 
-                logDebug(`🔄 Smooth candle update: $${currentPrice.toFixed(5)} (High: ${updatedCandle.high.toFixed(5)}, Low: ${updatedCandle.low.toFixed(5)})`, 'info');
+                logDebug(`🔄 Smooth update: $${currentPrice.toFixed(5)} [${candleStartTime}]`, 'info');
                 
             } else {
                 // WAKTU UNTUK CANDLE BARU
-                // Buat candle baru berdasarkan close candle sebelumnya
+                const newCandleStartTime = Math.floor(currentTime / (tfMinutes * 60)) * (tfMinutes * 60);
+                
                 const newCandle = {
-                    time: candleEndTime, // Mulai dari waktu berakhirnya candle sebelumnya
+                    time: newCandleStartTime, // PENTING: Gunakan timestamp yang rounded
                     open: lastCandle.close,
                     high: currentPrice,
                     low: currentPrice,
-                    close: currentPrice,
-                    volume: Math.floor(Math.random() * 100) + 50
+                    close: currentPrice
                 };
                 
-                // Tambah candle baru
                 existingData.push(newCandle);
                 
-                // Hapus candle lama jika terlalu banyak (max 500 candle)
+                // Limit history
                 if (existingData.length > 500) {
                     existingData.shift();
                 }
@@ -1438,14 +1309,12 @@
                 const series = candlestickSeries || lineSeries || areaSeries;
                 if (series) {
                     series.setData(existingData);
-                    // Scroll ke posisi terbaru
                     chart.timeScale().scrollToPosition(-1);
                 }
                 
-                logDebug(`🆕 New candle created: $${currentPrice.toFixed(5)}`, 'info');
+                logDebug(`🆕 New candle: $${currentPrice.toFixed(5)} [${newCandleStartTime}]`, 'info');
             }
             
-            // Simpan data terbaru
             realMarketData[symbol][currentTimeframe] = existingData;
         }
         
@@ -1456,10 +1325,12 @@
             const candles = [];
             
             let currentPrice = basePrice;
-            const startTime = Math.floor(Date.now() / 1000) - (count * tfMinutes * 60);
+            const currentTime = Math.floor(Date.now() / 1000);
             
-            // Generate realistic candles based on real price
-            for (let i = 0; i < count; i++) {
+            // PERBAIKAN: Generate dengan timestamp yang benar
+            for (let i = count - 1; i >= 0; i--) {
+                const candleTime = Math.floor((currentTime - (i * tfMinutes * 60)) / (tfMinutes * 60)) * (tfMinutes * 60);
+                
                 const change = (Math.random() - 0.5) * 2 * volatility;
                 const newPrice = currentPrice * (1 + change);
                 
@@ -1469,31 +1340,26 @@
                 const low = Math.min(open, close) * (1 - Math.random() * volatility * 0.3);
                 
                 candles.push({
-                    time: startTime + (i * tfMinutes * 60),
+                    time: candleTime,
                     open: parseFloat(open.toFixed(5)),
                     high: parseFloat(high.toFixed(5)),
                     low: parseFloat(low.toFixed(5)),
-                    close: parseFloat(close.toFixed(5)),
-                    volume: Math.floor(Math.random() * 1000) + 100
+                    close: parseFloat(close.toFixed(5))
                 });
                 
                 currentPrice = close;
             }
             
-            // Pastikan candle terakhir menggunakan harga real terakhir
+            // Pastikan candle terakhir menggunakan harga real
             if (candles.length > 0) {
-                const lastRealPrice = parseFloat(document.getElementById('currentPrice')?.dataset.lastPrice || basePrice);
-                candles[candles.length - 1].close = lastRealPrice;
-                candles[candles.length - 1].high = Math.max(candles[candles.length - 1].high, lastRealPrice);
-                candles[candles.length - 1].low = Math.min(candles[candles.length - 1].low, lastRealPrice);
-                candles[candles.length - 1].time = Math.floor(Date.now() / 1000) - (tfMinutes * 60);
+                candles[candles.length - 1].close = basePrice;
+                candles[candles.length - 1].high = Math.max(candles[candles.length - 1].high, basePrice);
+                candles[candles.length - 1].low = Math.min(candles[candles.length - 1].low, basePrice);
             }
             
-            // Store in cache
             if (!realMarketData[symbol]) realMarketData[symbol] = {};
             realMarketData[symbol][currentTimeframe] = candles;
             
-            // Update chart
             const series = candlestickSeries || lineSeries || areaSeries;
             if (series) {
                 series.setData(candles);
@@ -1513,18 +1379,57 @@
         
         function getVolatilityForSymbol(symbol) {
             const volatilityMap = {
-                'XAUUSD': 0.002,   // 0.2%
-                'EURUSD': 0.0001,  // 0.01%
+                'XAUUSD': 0.002,
+                'EURUSD': 0.0001,
                 'GBPUSD': 0.0001,
                 'USDJPY': 0.0001,
-                'BTCUSD': 0.005,   // 0.5%
-                'ETHUSD': 0.008,   // 0.8%
+                'BTCUSD': 0.005,
+                'ETHUSD': 0.008,
                 'TEST': 0.0005
             };
             return volatilityMap[symbol] || 0.0002;
         }
         
-        // =================== DATA FETCHING ===================
+        function updateChartForSymbol(symbol, data) {
+            if (!chart) return;
+            
+            const currentPrice = parseFloat(data.current_price) || 0;
+            const bidPrice = parseFloat(data.bid_price) || (currentPrice - 0.0001);
+            const askPrice = parseFloat(data.ask_price) || (currentPrice + 0.0001);
+            const spread = parseInt(data.spread) || 10;
+            
+            const basePrice = getBasePriceForSymbol(symbol);
+            const dailyChange = ((currentPrice - basePrice) / basePrice) * 100;
+            const changeEmoji = dailyChange >= 0 ? '📈' : '📉';
+            
+            document.getElementById('chartTitle').innerHTML = `
+                <i class="fas fa-chart-candlestick"></i>
+                <span>${changeEmoji} ${symbol} • ${getTimeframeLabel(currentTimeframe)} • $${currentPrice.toFixed(5)} 
+                <span style="color:${dailyChange >= 0 ? '#10b981' : '#ef4444'}; font-size: 14px;">${dailyChange >= 0 ? '+' : ''}${dailyChange.toFixed(3)}%</span></span>
+            `;
+            
+            document.getElementById('currentPrice').textContent = currentPrice.toFixed(5);
+            document.getElementById('bidAsk').textContent = `${bidPrice.toFixed(5)} / ${askPrice.toFixed(5)}`;
+            document.getElementById('spreadValue').textContent = `${spread} pips`;
+            document.getElementById('dailyChange').textContent = `${dailyChange >= 0 ? '+' : ''}${dailyChange.toFixed(3)}%`;
+            document.getElementById('dailyChange').className = `market-info-value ${dailyChange >= 0 ? 'positive' : 'negative'}`;
+            
+            smoothUpdateChartPrice(symbol, currentPrice);
+        }
+        
+        function updateChartTimeframe(symbol, timeframe) {
+            if (symbol && symbol !== 'ALL') {
+                if (realMarketData[symbol]) {
+                    delete realMarketData[symbol][currentTimeframe];
+                }
+                const currentPrice = parseFloat(document.getElementById('currentPrice').textContent) || 0;
+                if (currentPrice > 0) {
+                    smoothUpdateChartPrice(symbol, currentPrice);
+                }
+            }
+        }
+		
+		// =================== DATA FETCHING (FIXED) ===================
         async function updateDashboard() {
             updateCounter++;
             logDebug(`Fetching dashboard data... (Update #${updateCounter})`, 'info');
@@ -1542,7 +1447,6 @@
                 
                 const data = await response.json();
                 
-                // Check if it's error response
                 if (data.status === 'error' || data.status === 'no_data') {
                     logDebug(`API response: ${data.message}`, 'warning');
                     updateConnectionStatus(false, data.message);
@@ -1551,7 +1455,6 @@
                     return;
                 }
                 
-                // Remove _summary from data
                 const { _summary, ...symbolsData } = data;
                 
                 allData = symbolsData;
@@ -1561,12 +1464,10 @@
                 
                 updateSymbolSelector(symbols);
                 
-                // Update data status
                 document.getElementById('dataStatus').textContent = `${symbols.length} symbols`;
                 document.getElementById('dataStatus').style.color = '#10b981';
                 document.getElementById('totalTrades').textContent = _summary?.total_open_trades || 0;
                 
-                // Auto-select symbol if needed
                 if (currentSymbol === 'ALL' && symbols.length > 0) {
                     const symbolsWithTrades = symbols.filter(s => 
                         allData[s].open_trades > 0 || (allData[s].trades && allData[s].trades.length > 0)
@@ -1588,7 +1489,6 @@
                 showSymbolData(currentSymbol);
                 updateConnectionStatus(true);
                 
-                // Update last update time
                 const now = new Date();
                 document.getElementById('lastUpdate').textContent = 
                     now.toLocaleTimeString('id-ID', { hour12: false });
@@ -1607,12 +1507,10 @@
         function updateSymbolSelector(symbols) {
             const selector = document.getElementById('symbolSelector');
             
-            // Clear existing symbols (keep ALL button)
             const allBtn = selector.querySelector('[data-symbol="ALL"]');
             selector.innerHTML = '';
             selector.appendChild(allBtn);
             
-            // Add symbol buttons
             symbols.forEach(symbol => {
                 const hasTrades = allData[symbol] && 
                     (allData[symbol].open_trades > 0 || 
@@ -1637,18 +1535,16 @@
         function switchSymbol(symbol) {
             currentSymbol = symbol;
             
-            // Update button states
             document.querySelectorAll('.symbol-btn').forEach(btn => {
                 btn.classList.toggle('active', btn.dataset.symbol === symbol);
             });
             
-            // Update UI
             showSymbolData(symbol);
             
             logDebug(`Switched to symbol: ${symbol}`, 'info');
         }
         
-        // =================== UI UPDATES ===================
+        // =================== UI UPDATES (FIXED PIPS) ===================
         function showSymbolData(symbol) {
             const data = symbol === 'ALL' ? aggregateAllData() : allData[symbol];
             
@@ -1659,33 +1555,21 @@
                 return;
             }
             
-            // Update stats
             updateStats(data);
-            
-            // Update trades list
             updateTradesList(data.trades || []);
             
-            // Update timestamp
             if (data.timestamp) {
                 const date = new Date(data.timestamp * 1000);
                 document.getElementById('lastUpdate').textContent = 
                     date.toLocaleTimeString('id-ID', { hour12: false });
             }
             
-            // Update chart if not ALL
             if (symbol !== 'ALL') {
                 updateChartForSymbol(symbol, data);
-                // STORE REAL PRICE untuk chart updates
-                if (data.current_price) {
-                    storeRealPrice(data.current_price);
-                }
             } else {
-                // For ALL view, show generic chart
                 if (chart && candlestickSeries) {
                     document.getElementById('chartTitle').innerHTML = 
                         '<i class="fas fa-chart-candlestick"></i> <span>📊 ALL INSTRUMENTS - Portfolio Overview</span>';
-                    
-                    // Clear chart for ALL view
                     candlestickSeries.setData([]);
                 }
             }
@@ -1700,7 +1584,6 @@
             const mlTrained = parseInt(data.ml_trained) || 0;
             const openTrades = parseInt(data.open_trades) || 0;
             
-            // Equity
             document.getElementById('equity').textContent = `$${equity.toFixed(2)}`;
             document.getElementById('equity').className = `stat-value ${equity >= balance ? 'positive' : 'negative'}`;
             
@@ -1709,29 +1592,25 @@
             document.getElementById('equityChange').innerHTML = 
                 `<i class="fas ${equityIcon}"></i> $${Math.abs(equityChange).toFixed(2)}`;
             
-            // Balance
             document.getElementById('balance').textContent = `$${balance.toFixed(2)}`;
             
-            // Profit
             document.getElementById('profit').textContent = `$${profit.toFixed(2)}`;
             document.getElementById('profit').className = `stat-value ${profit >= 0 ? 'positive' : 'negative'}`;
             document.getElementById('profitPips').innerHTML = 
                 `<i class="fas fa-arrows-alt-h"></i> ${profitPips.toFixed(1)} pips`;
             
-            // Open Trades
             document.getElementById('openTrades').textContent = openTrades;
             
-            // ML Confidence
             document.getElementById('mlConfidence').textContent = `${mlConfidence.toFixed(1)}%`;
             document.getElementById('mlConfidence').className = `stat-value ${mlConfidence >= 60 ? 'positive' : mlConfidence >= 40 ? 'neutral' : 'negative'}`;
             document.getElementById('mlTrained').innerHTML = 
                 `<i class="fas fa-graduation-cap"></i> Trained: ${mlTrained}x`;
         }
         
+        // =================== TRADES LIST (FIXED PIPS CALCULATION) ===================
         function updateTradesList(trades) {
             const list = document.getElementById('tradesList');
             
-            // Ensure trades is an array
             if (!trades || !Array.isArray(trades)) {
                 trades = [];
             }
@@ -1748,22 +1627,45 @@
             }
             
             try {
-                // Sort by profit (highest first)
                 trades.sort((a, b) => {
                     const profitA = parseFloat(a.profit_usd || a.profit || 0);
                     const profitB = parseFloat(b.profit_usd || b.profit || 0);
                     return profitB - profitA;
                 });
                 
-                // Update count
                 document.getElementById('tradeCount').textContent = `(${trades.length} trades)`;
                 
-                // Clear and rebuild list
                 list.innerHTML = '';
                 
                 trades.forEach(trade => {
                     const profitUsd = parseFloat(trade.profit_usd || trade.profit || 0);
-                    const profitPips = parseFloat(trade.profit_pips || 0);
+                    
+                    // PERBAIKAN: Calculate pips jika tidak ada
+                    let profitPips = parseFloat(trade.profit_pips || 0);
+                    
+                    if (profitPips === 0 && trade.open_price && trade.current_price) {
+                        const openPrice = parseFloat(trade.open_price);
+                        const currentPrice = parseFloat(trade.current_price);
+                        const tradeType = (trade.type || 'BUY').toUpperCase();
+                        
+                        // Calculate pips based on trade type
+                        if (tradeType === 'BUY') {
+                            profitPips = (currentPrice - openPrice) * 10000; // For 4-digit pairs
+                        } else {
+                            profitPips = (openPrice - currentPrice) * 10000; // For SELL
+                        }
+                        
+                        // For JPY pairs (2-digit), divide by 100
+                        if (trade.symbol && trade.symbol.includes('JPY')) {
+                            profitPips = profitPips / 100;
+                        }
+                        
+                        // For Gold/Metals (XAU, XAG), pips are different
+                        if (trade.symbol && (trade.symbol.includes('XAU') || trade.symbol.includes('XAG'))) {
+                            profitPips = profitPips / 10;
+                        }
+                    }
+                    
                     const tradeType = (trade.type || 'BUY').toUpperCase();
                     const profitClass = profitUsd >= 0 ? 'positive' : 'negative';
                     const typeClass = tradeType.toLowerCase();
@@ -1775,10 +1677,10 @@
                         <div class="trade-details">
                             <div class="main">#${trade.ticket || 'N/A'} | ${trade.lots || '0'} lots | ${trade.symbol || currentSymbol}</div>
                             <div class="sub">
-                                <span>Entry: ${trade.open_price || '─'}</span>
-                                <span>Current: ${trade.current_price || '─'}</span>
-                                <span>SL: ${trade.sl || '─'}</span>
-                                <span>TP: ${trade.tp || '─'}</span>
+                                <span>Entry: ${trade.open_price || '—'}</span>
+                                <span>Current: ${trade.current_price || '—'}</span>
+                                <span>SL: ${trade.sl || '—'}</span>
+                                <span>TP: ${trade.tp || '—'}</span>
                             </div>
                         </div>
                         <div class="trade-profit ${profitClass}">
@@ -1833,7 +1735,6 @@
                 }
             }
             
-            // Update uptime
             if (connectionStart) {
                 const uptime = Math.floor((Date.now() - connectionStart) / 1000);
                 const hours = Math.floor(uptime / 3600);
@@ -1853,7 +1754,6 @@
         
         // =================== UTILITY FUNCTIONS ===================
         function getBasePriceForSymbol(symbol) {
-            // Simulasi base price untuk perhitungan change
             const basePrices = {
                 'XAUUSD': 1800.00,
                 'EURUSD': 1.0800,
@@ -1892,7 +1792,6 @@
                 }
             });
             
-            // Calculate averages
             if (Object.keys(allData).length > 0) {
                 total.ml_confidence = Object.values(allData).reduce((sum, d) => 
                     sum + (parseFloat(d.ml_confidence) || 0), 0) / Object.keys(allData).length;
@@ -1909,16 +1808,6 @@
                 '60': '1 Hour', '240': '4 Hours', 'D': '1 Day'
             };
             return labels[tf] || `${tf} Minute${tf !== '1' ? 's' : ''}`;
-        }
-        
-        function updateChartTimeframe(symbol, timeframe) {
-            if (symbol && symbol !== 'ALL') {
-                // Reset chart data untuk timeframe baru
-                if (realMarketData[symbol]) {
-                    delete realMarketData[symbol][currentTimeframe];
-                }
-                smoothUpdateChartPrice(symbol, parseFloat(document.getElementById('currentPrice').textContent) || 0);
-            }
         }
         
         // =================== INITIALIZE APP ===================

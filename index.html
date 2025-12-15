@@ -899,7 +899,7 @@
     
     <script>
 	
-	// =================== GLOBAL VARIABLES ===================
+// =================== GLOBAL VARIABLES ===================
         let chart = null;
         let candlestickSeries = null;
         let lineSeries = null;
@@ -915,6 +915,74 @@
         let refreshInterval = 5000;
         let refreshTimer = null;
         let updateCounter = 0;
+        
+        // =================== INSTRUMENT SPECIFICATIONS ===================
+        function getInstrumentSpec(symbol) {
+            // Standard broker specifications
+            const specs = {
+                // Forex Majors (5 digits)
+                'EURUSD': { digits: 5, tickSize: 0.00001, pipMultiplier: 100000, type: 'forex' },
+                'GBPUSD': { digits: 5, tickSize: 0.00001, pipMultiplier: 100000, type: 'forex' },
+                'USDCHF': { digits: 5, tickSize: 0.00001, pipMultiplier: 100000, type: 'forex' },
+                'AUDUSD': { digits: 5, tickSize: 0.00001, pipMultiplier: 100000, type: 'forex' },
+                'NZDUSD': { digits: 5, tickSize: 0.00001, pipMultiplier: 100000, type: 'forex' },
+                'EURGBP': { digits: 5, tickSize: 0.00001, pipMultiplier: 100000, type: 'forex' },
+                'EURJPY': { digits: 3, tickSize: 0.001, pipMultiplier: 1000, type: 'forex' },
+                
+                // JPY Pairs (3 digits)
+                'USDJPY': { digits: 3, tickSize: 0.001, pipMultiplier: 1000, type: 'forex' },
+                'GBPJPY': { digits: 3, tickSize: 0.001, pipMultiplier: 1000, type: 'forex' },
+                'CHFJPY': { digits: 3, tickSize: 0.001, pipMultiplier: 1000, type: 'forex' },
+                'AUDJPY': { digits: 3, tickSize: 0.001, pipMultiplier: 1000, type: 'forex' },
+                'CADJPY': { digits: 3, tickSize: 0.001, pipMultiplier: 1000, type: 'forex' },
+                'NZDJPY': { digits: 3, tickSize: 0.001, pipMultiplier: 1000, type: 'forex' },
+                
+                // Metals (2-3 digits)
+                'XAUUSD': { digits: 2, tickSize: 0.01, pipMultiplier: 100, type: 'metal' },
+                'XAGUSD': { digits: 3, tickSize: 0.001, pipMultiplier: 1000, type: 'metal' },
+                'GOLD': { digits: 2, tickSize: 0.01, pipMultiplier: 100, type: 'metal' },
+                'SILVER': { digits: 3, tickSize: 0.001, pipMultiplier: 1000, type: 'metal' },
+                
+                // Crypto (2 digits)
+                'BTCUSD': { digits: 2, tickSize: 0.01, pipMultiplier: 100, type: 'crypto' },
+                'ETHUSD': { digits: 2, tickSize: 0.01, pipMultiplier: 100, type: 'crypto' },
+                'LTCUSD': { digits: 2, tickSize: 0.01, pipMultiplier: 100, type: 'crypto' },
+                'XRPUSD': { digits: 5, tickSize: 0.00001, pipMultiplier: 100000, type: 'crypto' },
+                
+                // Indices (2 digits)
+                'US30': { digits: 2, tickSize: 0.01, pipMultiplier: 100, type: 'index' },
+                'NAS100': { digits: 2, tickSize: 0.01, pipMultiplier: 100, type: 'index' },
+                'SPX500': { digits: 2, tickSize: 0.01, pipMultiplier: 100, type: 'index' },
+                'GER40': { digits: 2, tickSize: 0.01, pipMultiplier: 100, type: 'index' },
+                'UK100': { digits: 2, tickSize: 0.01, pipMultiplier: 100, type: 'index' },
+                'JP225': { digits: 0, tickSize: 1, pipMultiplier: 1, type: 'index' },
+                
+                // Oil/Commodities (3 digits)
+                'USOIL': { digits: 3, tickSize: 0.001, pipMultiplier: 1000, type: 'commodity' },
+                'UKOIL': { digits: 3, tickSize: 0.001, pipMultiplier: 1000, type: 'commodity' },
+                
+                // Default for unknown symbols
+                'TEST': { digits: 5, tickSize: 0.00001, pipMultiplier: 100000, type: 'forex' },
+            };
+            
+            // Return spec or default to forex 5-digit
+            return specs[symbol] || { digits: 5, tickSize: 0.00001, pipMultiplier: 100000, type: 'forex' };
+        }
+        
+        function formatPrice(price, symbol) {
+            const spec = getInstrumentSpec(symbol);
+            return parseFloat(price).toFixed(spec.digits);
+        }
+        
+        function calculatePips(openPrice, currentPrice, symbol, tradeType) {
+            const spec = getInstrumentSpec(symbol);
+            const priceDiff = tradeType === 'BUY' ? 
+                (currentPrice - openPrice) : 
+                (openPrice - currentPrice);
+            
+            // Calculate pips based on instrument type
+            return priceDiff * spec.pipMultiplier;
+        }
         
         // =================== DEBUG SYSTEM ===================
         function logDebug(message, type = 'info') {
@@ -964,10 +1032,10 @@
         
         // =================== INITIALIZATION ===================
         async function initApplication() {
-            updateLoadingStatus('Initializing TradingView Monitor...', 'v2.0 - Fixed Chart');
+            updateLoadingStatus('Initializing TradingView Monitor...', 'v2.1 - Correct Precision');
             updateLoadingProgress(10);
             
-            logDebug('🚀 Initializing TradingView Monitor v2.0 - FIXED', 'info');
+            logDebug('🚀 Initializing TradingView Monitor v2.1 - Correct Digits & Ticks', 'info');
             
             updateLoadingStatus('Setting up time display...');
             updateLoadingProgress(20);
@@ -1090,7 +1158,7 @@
             logDebug('Polling system started (5s interval)', 'info');
         }
         
-        // =================== CHART SYSTEM (FIXED) ===================
+        // =================== CHART SYSTEM (FIXED WITH CORRECT PRECISION) ===================
         async function initChart() {
             logDebug('Initializing TradingView chart...', 'info');
             
@@ -1151,6 +1219,7 @@
                     },
                 });
                 
+                // Create initial candlestick series with default precision
                 candlestickSeries = chart.addCandlestickSeries({
                     upColor: '#10b981',
                     downColor: '#ef4444',
@@ -1180,6 +1249,26 @@
             }
         }
         
+        function updateChartPrecision(symbol) {
+            if (!chart) return;
+            
+            const spec = getInstrumentSpec(symbol);
+            
+            // Update series precision
+            const series = candlestickSeries || lineSeries || areaSeries;
+            if (series) {
+                series.applyOptions({
+                    priceFormat: {
+                        type: 'price',
+                        precision: spec.digits,
+                        minMove: spec.tickSize,
+                    }
+                });
+                
+                logDebug(`Chart precision updated: ${spec.digits} digits, tick: ${spec.tickSize}`, 'info');
+            }
+        }
+        
         function changeChartType(type) {
             if (!chart) return;
             
@@ -1191,6 +1280,8 @@
             lineSeries = null;
             areaSeries = null;
             
+            const spec = getInstrumentSpec(currentSymbol);
+            
             switch(type) {
                 case 'candlestick':
                     candlestickSeries = chart.addCandlestickSeries({
@@ -1200,6 +1291,11 @@
                         borderUpColor: '#10b981',
                         wickDownColor: '#ef4444',
                         wickUpColor: '#10b981',
+                        priceFormat: {
+                            type: 'price',
+                            precision: spec.digits,
+                            minMove: spec.tickSize,
+                        },
                         priceLineVisible: false,
                     });
                     break;
@@ -1209,6 +1305,11 @@
                         color: '#667eea',
                         lineWidth: 2,
                         crosshairMarkerVisible: true,
+                        priceFormat: {
+                            type: 'price',
+                            precision: spec.digits,
+                            minMove: spec.tickSize,
+                        },
                         priceLineVisible: false,
                     });
                     break;
@@ -1219,6 +1320,11 @@
                         bottomColor: 'rgba(102, 126, 234, 0.0)',
                         lineColor: '#667eea',
                         lineWidth: 2,
+                        priceFormat: {
+                            type: 'price',
+                            precision: spec.digits,
+                            minMove: spec.tickSize,
+                        },
                         priceLineVisible: false,
                     });
                     break;
@@ -1239,12 +1345,17 @@
             }
         }
         
-        // =================== FIXED CHART UPDATE FUNCTION ===================
+        // =================== FIXED CHART UPDATE FUNCTION WITH CORRECT PRECISION ===================
         function smoothUpdateChartPrice(symbol, currentPrice) {
             if (!currentPrice || currentPrice === 0) {
                 logDebug(`No valid price for ${symbol}`, 'warning');
                 return;
             }
+            
+            // Update chart precision for this symbol
+            updateChartPrecision(symbol);
+            
+            const spec = getInstrumentSpec(symbol);
             
             if (!realMarketData[symbol]) realMarketData[symbol] = {};
             
@@ -1255,64 +1366,57 @@
                 return;
             }
             
-            // PERBAIKAN UTAMA: Ambil candle terakhir
             let lastCandle = existingData[existingData.length - 1];
             const currentTime = Math.floor(Date.now() / 1000);
             const tfMinutes = getTimeframeMinutes(currentTimeframe);
             
-            // PERBAIKAN: Hitung waktu mulai candle (rounded ke timeframe)
             const candleStartTime = Math.floor(lastCandle.time / (tfMinutes * 60)) * (tfMinutes * 60);
             const candleEndTime = candleStartTime + (tfMinutes * 60);
             
-            // Cek apakah masih dalam timeframe yang sama
             if (currentTime < candleEndTime) {
-                // UPDATE CANDLE YANG SAMA (SMOOTH) - FIXED
+                // UPDATE CANDLE - Rounded to correct precision
                 const updatedCandle = {
-                    time: candleStartTime, // PENTING: Gunakan start time yang sama
-                    open: lastCandle.open,
-                    high: Math.max(lastCandle.high, currentPrice),
-                    low: Math.min(lastCandle.low, currentPrice),
-                    close: currentPrice
+                    time: candleStartTime,
+                    open: parseFloat(lastCandle.open.toFixed(spec.digits)),
+                    high: parseFloat(Math.max(lastCandle.high, currentPrice).toFixed(spec.digits)),
+                    low: parseFloat(Math.min(lastCandle.low, currentPrice).toFixed(spec.digits)),
+                    close: parseFloat(currentPrice.toFixed(spec.digits))
                 };
                 
-                // Update array
                 existingData[existingData.length - 1] = updatedCandle;
                 
-                // Update chart TANPA membuat candle baru
                 const series = candlestickSeries || lineSeries || areaSeries;
                 if (series) {
                     series.update(updatedCandle);
                 }
                 
-                logDebug(`🔄 Smooth update: $${currentPrice.toFixed(5)} [${candleStartTime}]`, 'info');
+                logDebug(`🔄 Smooth update: ${formatPrice(currentPrice, symbol)} [${spec.digits}d]`, 'info');
                 
             } else {
-                // WAKTU UNTUK CANDLE BARU
+                // NEW CANDLE - Rounded to correct precision
                 const newCandleStartTime = Math.floor(currentTime / (tfMinutes * 60)) * (tfMinutes * 60);
                 
                 const newCandle = {
-                    time: newCandleStartTime, // PENTING: Gunakan timestamp yang rounded
-                    open: lastCandle.close,
-                    high: currentPrice,
-                    low: currentPrice,
-                    close: currentPrice
+                    time: newCandleStartTime,
+                    open: parseFloat(lastCandle.close.toFixed(spec.digits)),
+                    high: parseFloat(currentPrice.toFixed(spec.digits)),
+                    low: parseFloat(currentPrice.toFixed(spec.digits)),
+                    close: parseFloat(currentPrice.toFixed(spec.digits))
                 };
                 
                 existingData.push(newCandle);
                 
-                // Limit history
                 if (existingData.length > 500) {
                     existingData.shift();
                 }
                 
-                // Update chart dengan data lengkap
                 const series = candlestickSeries || lineSeries || areaSeries;
                 if (series) {
                     series.setData(existingData);
                     chart.timeScale().scrollToPosition(-1);
                 }
                 
-                logDebug(`🆕 New candle: $${currentPrice.toFixed(5)} [${newCandleStartTime}]`, 'info');
+                logDebug(`🆕 New candle: ${formatPrice(currentPrice, symbol)} [${newCandleStartTime}]`, 'info');
             }
             
             realMarketData[symbol][currentTimeframe] = existingData;
@@ -1322,12 +1426,12 @@
             const count = 100;
             const tfMinutes = getTimeframeMinutes(currentTimeframe);
             const volatility = getVolatilityForSymbol(symbol);
+            const spec = getInstrumentSpec(symbol);
             const candles = [];
             
             let currentPrice = basePrice;
             const currentTime = Math.floor(Date.now() / 1000);
             
-            // PERBAIKAN: Generate dengan timestamp yang benar
             for (let i = count - 1; i >= 0; i--) {
                 const candleTime = Math.floor((currentTime - (i * tfMinutes * 60)) / (tfMinutes * 60)) * (tfMinutes * 60);
                 
@@ -1341,31 +1445,32 @@
                 
                 candles.push({
                     time: candleTime,
-                    open: parseFloat(open.toFixed(5)),
-                    high: parseFloat(high.toFixed(5)),
-                    low: parseFloat(low.toFixed(5)),
-                    close: parseFloat(close.toFixed(5))
+                    open: parseFloat(open.toFixed(spec.digits)),
+                    high: parseFloat(high.toFixed(spec.digits)),
+                    low: parseFloat(low.toFixed(spec.digits)),
+                    close: parseFloat(close.toFixed(spec.digits))
                 });
                 
                 currentPrice = close;
             }
             
-            // Pastikan candle terakhir menggunakan harga real
             if (candles.length > 0) {
-                candles[candles.length - 1].close = basePrice;
-                candles[candles.length - 1].high = Math.max(candles[candles.length - 1].high, basePrice);
-                candles[candles.length - 1].low = Math.min(candles[candles.length - 1].low, basePrice);
+                candles[candles.length - 1].close = parseFloat(basePrice.toFixed(spec.digits));
+                candles[candles.length - 1].high = parseFloat(Math.max(candles[candles.length - 1].high, basePrice).toFixed(spec.digits));
+                candles[candles.length - 1].low = parseFloat(Math.min(candles[candles.length - 1].low, basePrice).toFixed(spec.digits));
             }
             
             if (!realMarketData[symbol]) realMarketData[symbol] = {};
             realMarketData[symbol][currentTimeframe] = candles;
+            
+            updateChartPrecision(symbol);
             
             const series = candlestickSeries || lineSeries || areaSeries;
             if (series) {
                 series.setData(candles);
                 chart.timeScale().fitContent();
                 chart.timeScale().scrollToPosition(-1);
-                logDebug(`📊 Initial chart generated for ${symbol} at $${basePrice.toFixed(5)}`, 'info');
+                logDebug(`📊 Initial chart for ${symbol}: ${formatPrice(basePrice, symbol)} [${spec.digits}d]`, 'info');
             }
         }
         
@@ -1379,13 +1484,9 @@
         
         function getVolatilityForSymbol(symbol) {
             const volatilityMap = {
-                'XAUUSD': 0.002,
-                'EURUSD': 0.0001,
-                'GBPUSD': 0.0001,
-                'USDJPY': 0.0001,
-                'BTCUSD': 0.005,
-                'ETHUSD': 0.008,
-                'TEST': 0.0005
+                'XAUUSD': 0.002, 'EURUSD': 0.0001, 'GBPUSD': 0.0001,
+                'USDJPY': 0.0001, 'BTCUSD': 0.005, 'ETHUSD': 0.008,
+                'TEST': 0.0005, 'US30': 0.001, 'NAS100': 0.0015
             };
             return volatilityMap[symbol] || 0.0002;
         }
@@ -1393,9 +1494,10 @@
         function updateChartForSymbol(symbol, data) {
             if (!chart) return;
             
+            const spec = getInstrumentSpec(symbol);
             const currentPrice = parseFloat(data.current_price) || 0;
-            const bidPrice = parseFloat(data.bid_price) || (currentPrice - 0.0001);
-            const askPrice = parseFloat(data.ask_price) || (currentPrice + 0.0001);
+            const bidPrice = parseFloat(data.bid_price) || (currentPrice - spec.tickSize);
+            const askPrice = parseFloat(data.ask_price) || (currentPrice + spec.tickSize);
             const spread = parseInt(data.spread) || 10;
             
             const basePrice = getBasePriceForSymbol(symbol);
@@ -1404,14 +1506,14 @@
             
             document.getElementById('chartTitle').innerHTML = `
                 <i class="fas fa-chart-candlestick"></i>
-                <span>${changeEmoji} ${symbol} • ${getTimeframeLabel(currentTimeframe)} • $${currentPrice.toFixed(5)} 
-                <span style="color:${dailyChange >= 0 ? '#10b981' : '#ef4444'}; font-size: 14px;">${dailyChange >= 0 ? '+' : ''}${dailyChange.toFixed(3)}%</span></span>
+                <span>${changeEmoji} ${symbol} • ${getTimeframeLabel(currentTimeframe)} • ${formatPrice(currentPrice, symbol)} 
+                <span style="color:${dailyChange >= 0 ? '#10b981' : '#ef4444'}; font-size: 14px;">${dailyChange >= 0 ? '+' : ''}${dailyChange.toFixed(2)}%</span></span>
             `;
             
-            document.getElementById('currentPrice').textContent = currentPrice.toFixed(5);
-            document.getElementById('bidAsk').textContent = `${bidPrice.toFixed(5)} / ${askPrice.toFixed(5)}`;
+            document.getElementById('currentPrice').textContent = formatPrice(currentPrice, symbol);
+            document.getElementById('bidAsk').textContent = `${formatPrice(bidPrice, symbol)} / ${formatPrice(askPrice, symbol)}`;
             document.getElementById('spreadValue').textContent = `${spread} pips`;
-            document.getElementById('dailyChange').textContent = `${dailyChange >= 0 ? '+' : ''}${dailyChange.toFixed(3)}%`;
+            document.getElementById('dailyChange').textContent = `${dailyChange >= 0 ? '+' : ''}${dailyChange.toFixed(2)}%`;
             document.getElementById('dailyChange').className = `market-info-value ${dailyChange >= 0 ? 'positive' : 'negative'}`;
             
             smoothUpdateChartPrice(symbol, currentPrice);
@@ -1429,7 +1531,7 @@
             }
         }
 		
-		// =================== DATA FETCHING (FIXED) ===================
+// =================== DATA FETCHING (FIXED) ===================
         async function updateDashboard() {
             updateCounter++;
             logDebug(`Fetching dashboard data... (Update #${updateCounter})`, 'info');
@@ -1544,7 +1646,7 @@
             logDebug(`Switched to symbol: ${symbol}`, 'info');
         }
         
-        // =================== UI UPDATES (FIXED PIPS) ===================
+        // =================== UI UPDATES (FIXED) ===================
         function showSymbolData(symbol) {
             const data = symbol === 'ALL' ? aggregateAllData() : allData[symbol];
             
@@ -1607,7 +1709,7 @@
                 `<i class="fas fa-graduation-cap"></i> Trained: ${mlTrained}x`;
         }
         
-        // =================== TRADES LIST (FIXED PIPS CALCULATION) ===================
+        // =================== TRADES LIST (FIXED PIPS WITH CORRECT PRECISION) ===================
         function updateTradesList(trades) {
             const list = document.getElementById('tradesList');
             
@@ -1639,8 +1741,9 @@
                 
                 trades.forEach(trade => {
                     const profitUsd = parseFloat(trade.profit_usd || trade.profit || 0);
+                    const symbol = trade.symbol || currentSymbol;
                     
-                    // PERBAIKAN: Calculate pips jika tidak ada
+                    // PERBAIKAN: Calculate pips dengan precision yang benar
                     let profitPips = parseFloat(trade.profit_pips || 0);
                     
                     if (profitPips === 0 && trade.open_price && trade.current_price) {
@@ -1648,39 +1751,31 @@
                         const currentPrice = parseFloat(trade.current_price);
                         const tradeType = (trade.type || 'BUY').toUpperCase();
                         
-                        // Calculate pips based on trade type
-                        if (tradeType === 'BUY') {
-                            profitPips = (currentPrice - openPrice) * 10000; // For 4-digit pairs
-                        } else {
-                            profitPips = (openPrice - currentPrice) * 10000; // For SELL
-                        }
-                        
-                        // For JPY pairs (2-digit), divide by 100
-                        if (trade.symbol && trade.symbol.includes('JPY')) {
-                            profitPips = profitPips / 100;
-                        }
-                        
-                        // For Gold/Metals (XAU, XAG), pips are different
-                        if (trade.symbol && (trade.symbol.includes('XAU') || trade.symbol.includes('XAG'))) {
-                            profitPips = profitPips / 10;
-                        }
+                        // Use correct calculation based on instrument
+                        profitPips = calculatePips(openPrice, currentPrice, symbol, tradeType);
                     }
                     
                     const tradeType = (trade.type || 'BUY').toUpperCase();
                     const profitClass = profitUsd >= 0 ? 'positive' : 'negative';
                     const typeClass = tradeType.toLowerCase();
                     
+                    // Format prices with correct precision
+                    const openPrice = formatPrice(parseFloat(trade.open_price || 0), symbol);
+                    const currentPrice = formatPrice(parseFloat(trade.current_price || 0), symbol);
+                    const sl = trade.sl && trade.sl != '0' ? formatPrice(parseFloat(trade.sl), symbol) : '—';
+                    const tp = trade.tp && trade.tp != '0' ? formatPrice(parseFloat(trade.tp), symbol) : '—';
+                    
                     const item = document.createElement('div');
                     item.className = `trade-item ${typeClass}`;
                     item.innerHTML = `
                         <div class="trade-type ${typeClass}">${tradeType}</div>
                         <div class="trade-details">
-                            <div class="main">#${trade.ticket || 'N/A'} | ${trade.lots || '0'} lots | ${trade.symbol || currentSymbol}</div>
+                            <div class="main">#${trade.ticket || 'N/A'} | ${trade.lots || '0'} lots | ${symbol}</div>
                             <div class="sub">
-                                <span>Entry: ${trade.open_price || '—'}</span>
-                                <span>Current: ${trade.current_price || '—'}</span>
-                                <span>SL: ${trade.sl || '—'}</span>
-                                <span>TP: ${trade.tp || '—'}</span>
+                                <span>Entry: ${openPrice}</span>
+                                <span>Current: ${currentPrice}</span>
+                                <span>SL: ${sl}</span>
+                                <span>TP: ${tp}</span>
                             </div>
                         </div>
                         <div class="trade-profit ${profitClass}">
@@ -1755,15 +1850,12 @@
         // =================== UTILITY FUNCTIONS ===================
         function getBasePriceForSymbol(symbol) {
             const basePrices = {
-                'XAUUSD': 1800.00,
-                'EURUSD': 1.0800,
-                'GBPUSD': 1.2600,
-                'USDJPY': 148.00,
-                'TEST': 100.00,
-                'BTCUSD': 42000.00,
-                'ETHUSD': 2500.00
+                'XAUUSD': 2650.00, 'EURUSD': 1.0800, 'GBPUSD': 1.2700,
+                'USDJPY': 151.50, 'AUDUSD': 0.6500, 'USDCHF': 0.8800,
+                'BTCUSD': 98000.00, 'ETHUSD': 3400.00, 'US30': 43500.00,
+                'NAS100': 19500.00, 'SPX500': 5950.00, 'TEST': 100.00
             };
-            return basePrices[symbol] || (symbol === 'ALL' ? 1.0000 : 100.00);
+            return basePrices[symbol] || 100.00;
         }
         
         function aggregateAllData() {

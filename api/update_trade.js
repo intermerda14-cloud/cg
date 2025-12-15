@@ -23,165 +23,163 @@ export default async function handler(req, res) {
     return res.status(200).end();
   }
   
-  console.log(`📨 Received ${req.method} request at ${new Date().toISOString()}`);
-  console.log('📦 Request body:', req.body);
-  console.log('🔍 Request query:', req.query);
-  console.log('📋 Request headers:', req.headers);
+  console.log(`📨 [${new Date().toISOString()}] ${req.method} request received`);
   
   let tradeData = {};
   
-  // ACCEPT BOTH GET AND POST
-  if (req.method === 'POST') {
-    // Try to parse JSON body
-    if (typeof req.body === 'object' && req.body !== null) {
-      tradeData = req.body;
-    } else if (typeof req.body === 'string' && req.body.trim() !== '') {
-      try {
-        tradeData = JSON.parse(req.body);
-      } catch (e) {
-        // Try URL encoded form data
+  try {
+    // Handle POST request (from EA MT5)
+    if (req.method === 'POST') {
+      // EA mengirim JSON string, parse langsung
+      if (typeof req.body === 'string') {
         try {
-          const params = new URLSearchParams(req.body);
-          tradeData = Object.fromEntries(params);
-        } catch (e2) {
-          console.error('Failed to parse body:', e2);
+          tradeData = JSON.parse(req.body);
+          console.log('✅ Parsed JSON from EA:', JSON.stringify(tradeData, null, 2));
+        } catch (e) {
+          console.error('❌ Failed to parse JSON:', e.message);
+          console.log('Raw body:', req.body);
+          
+          // Try to extract data from string
+          if (req.body.includes('symbol') && req.body.includes('timestamp')) {
+            // Manual extraction
+            const symbolMatch = req.body.match(/"symbol"\s*:\s*"([^"]+)"/);
+            const timestampMatch = req.body.match(/"timestamp"\s*:\s*(\d+)/);
+            
+            if (symbolMatch && timestampMatch) {
+              tradeData.symbol = symbolMatch[1];
+              tradeData.timestamp = parseInt(timestampMatch[1]);
+              console.log('🔍 Extracted manually:', tradeData);
+            }
+          }
         }
+      } else if (typeof req.body === 'object') {
+        tradeData = req.body;
+        console.log('✅ Received object:', tradeData);
       }
     }
-  } else if (req.method === 'GET') {
-    // Parse data from query parameters
-    tradeData = req.query;
-  }
-  
-  console.log('🔄 Parsed tradeData:', tradeData);
-  
-  // SPECIAL CASE: If EA sends data as form-urlencoded in POST body
-  if (req.headers['content-type'] && 
-      req.headers['content-type'].includes('application/x-www-form-urlencoded') &&
-      typeof req.body === 'string') {
-    try {
-      const params = new URLSearchParams(req.body);
-      tradeData = Object.fromEntries(params);
-      console.log('🔄 Parsed as form-urlencoded:', tradeData);
-    } catch (e) {
-      console.error('Failed to parse form-urlencoded:', e);
+    // Handle GET request (for testing)
+    else if (req.method === 'GET') {
+      tradeData = req.query;
+      console.log('🔍 GET params:', tradeData);
     }
-  }
-  
-  // Try to extract symbol and timestamp from various possible field names
-  let symbol = tradeData.symbol || tradeData.Symbol || tradeData.SYMBOL || 
-               tradeData.instrument || tradeData.Instrument || 
-               tradeData.pair || tradeData.Pair;
-  
-  let timestamp = tradeData.timestamp || tradeData.Timestamp || tradeData.TIMESTAMP ||
-                  tradeData.time || tradeData.Time || tradeData.TIME ||
-                  tradeData.server_time || tradeData.serverTime;
-  
-  // If timestamp is not a number, try to parse it
-  if (timestamp && isNaN(parseInt(timestamp))) {
-    // Try to convert date string to timestamp
-    const date = new Date(timestamp);
-    if (!isNaN(date.getTime())) {
-      timestamp = Math.floor(date.getTime() / 1000);
+    
+    // VALIDATE DATA
+    console.log('🔄 Final tradeData:', tradeData);
+    
+    // Check for symbol (try multiple field names)
+    const symbol = tradeData.symbol || tradeData.Symbol || tradeData.SYMBOL;
+    
+    // Check for timestamp (try multiple field names)
+    let timestamp = tradeData.timestamp || tradeData.Timestamp || tradeData.TIMESTAMP || 
+                    tradeData.time || tradeData.Time || tradeData.TIME;
+    
+    // Convert to number if string
+    if (timestamp && typeof timestamp === 'string') {
+      timestamp = parseInt(timestamp);
     }
-  }
-  
-  // Generate timestamp if missing
-  if (!timestamp) {
-    timestamp = Math.floor(Date.now() / 1000);
-  }
-  
-  // If still no symbol, try to guess from other fields
-  if (!symbol && tradeData.ticket) {
-    symbol = `UNKNOWN_${tradeData.ticket}`;
-  }
-  
-  console.log('🎯 Extracted symbol:', symbol, 'timestamp:', timestamp);
-  
-  if (!symbol) {
-    return res.status(400).json({ 
-      error: 'Missing required field: symbol',
-      received_data: tradeData,
-      raw_body: req.body,
-      raw_query: req.query,
-      headers: req.headers,
-      suggestions: [
-        'Make sure EA sends "symbol" field',
-        'Check field name case (symbol vs Symbol vs SYMBOL)',
-        'Check if data is JSON or form-urlencoded'
-      ]
-    });
-  }
-  
-  try {
-    // Add server metadata
-    const finalTradeData = {
+    
+    // Generate timestamp if missing
+    if (!timestamp || isNaN(timestamp)) {
+      timestamp = Math.floor(Date.now() / 1000);
+      console.log('🕐 Generated timestamp:', timestamp);
+    }
+    
+    // Check required fields
+    if (!symbol) {
+      return res.status(400).json({
+        status: 'error',
+        error: 'Missing required field: symbol',
+        received_data: tradeData,
+        raw_body: req.body,
+        suggestions: [
+          'EA harus mengirim field "symbol" dalam JSON',
+          'Contoh: {"symbol":"XAUUSD","timestamp":1234567890,...}',
+          'Pastikan Content-Type: application/json'
+        ],
+        debug_info: {
+          method: req.method,
+          content_type: req.headers['content-type'],
+          body_type: typeof req.body,
+          body_length: req.body ? req.body.length : 0
+        }
+      });
+    }
+    
+    // Prepare data for MongoDB
+    const mongoData = {
       ...tradeData,
       symbol: symbol,
-      timestamp: parseInt(timestamp),
+      timestamp: timestamp,
       server_received: Math.floor(Date.now() / 1000),
       updated_at: new Date().toISOString(),
-      method_used: req.method,
-      content_type: req.headers['content-type'] || 'unknown'
+      ip_address: req.headers['x-forwarded-for'] || req.socket.remoteAddress
     };
     
-    // Convert string numbers to actual numbers
-    const numericFields = ['profit', 'profit_pips', 'lots', 'open_price', 
-                          'current_price', 'sl', 'tp', 'balance', 'equity'];
+    // Convert numeric fields
+    const numericFields = [
+      'profit', 'profit_usd', 'profit_pips', 'lots', 'open_price',
+      'current_price', 'sl', 'tp', 'balance', 'equity', 'margin'
+    ];
     
     numericFields.forEach(field => {
-      if (finalTradeData[field] !== undefined && finalTradeData[field] !== null) {
-        const num = parseFloat(finalTradeData[field]);
+      if (mongoData[field] !== undefined && mongoData[field] !== null) {
+        const num = parseFloat(mongoData[field]);
         if (!isNaN(num)) {
-          finalTradeData[field] = num;
+          mongoData[field] = num;
         }
       }
     });
     
-    console.log('💾 Final data to save:', finalTradeData);
+    console.log('💾 Saving to MongoDB:', {
+      symbol: mongoData.symbol,
+      timestamp: mongoData.timestamp,
+      trades: mongoData.trades ? mongoData.trades.length || 'array' : 'none',
+      profit: mongoData.profit
+    });
     
+    // Save to MongoDB
     const { client, db } = await connectToDatabase();
     const collection = db.collection('trades');
     
-    // Use ticket as unique identifier if available
-    const query = finalTradeData.ticket ? 
-      { symbol: finalTradeData.symbol, ticket: finalTradeData.ticket } :
-      { symbol: finalTradeData.symbol, timestamp: finalTradeData.timestamp };
+    // Use symbol + timestamp as key, or symbol + ticket
+    const query = mongoData.ticket ? 
+      { symbol: mongoData.symbol, ticket: mongoData.ticket } :
+      { symbol: mongoData.symbol, timestamp: mongoData.timestamp };
     
-    // Update or insert
     const result = await collection.updateOne(
       query,
-      { $set: finalTradeData },
+      { $set: mongoData },
       { upsert: true }
     );
     
-    console.log(`✅ Trade ${finalTradeData.ticket ? '#' + finalTradeData.ticket : ''} for ${finalTradeData.symbol} ${result.upsertedCount ? 'inserted' : 'updated'} via ${req.method}`);
+    console.log(`✅ MongoDB result: ${result.matchedCount} matched, ${result.modifiedCount} modified, ${result.upsertedCount} upserted`);
     
+    // Send success response
     res.status(200).json({
       status: 'success',
-      message: `Trade data saved for ${finalTradeData.symbol}`,
-      timestamp: finalTradeData.server_received,
+      message: `Trade data for ${mongoData.symbol} saved successfully`,
+      timestamp: mongoData.server_received,
       data: {
-        symbol: finalTradeData.symbol,
-        ticket: finalTradeData.ticket,
+        symbol: mongoData.symbol,
+        ticket: mongoData.ticket,
+        open_trades: mongoData.open_trades,
+        profit: mongoData.profit,
         method: req.method,
-        matched: result.matchedCount,
-        modified: result.modifiedCount,
-        upserted: result.upsertedCount
-      },
-      debug: {
-        received: tradeData,
-        processed: finalTradeData
+        mongo_result: {
+          matched: result.matchedCount,
+          modified: result.modifiedCount,
+          upserted: result.upsertedCount
+        }
       }
     });
     
   } catch (error) {
-    console.error('❌ Error saving trade:', error);
-    res.status(500).json({ 
+    console.error('❌ API Error:', error);
+    res.status(500).json({
       status: 'error',
       message: error.message,
       timestamp: Math.floor(Date.now() / 1000),
-      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      stack: process.env.NODE_ENV === 'production' ? undefined : error.stack
     });
   }
 }

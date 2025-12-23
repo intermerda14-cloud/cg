@@ -3,19 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BB Golden Scalper V3.6 - TradingView Monitor</title>
+    <title>BB Grid V5 - Advanced Trading Monitor</title>
     
-    <!-- Trading Charts -->
     <script src="https://cdn.jsdelivr.net/npm/lightweight-charts@4.1.0/dist/lightweight-charts.standalone.production.js"></script>
-    
-    <!-- Font Awesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     
     <style>
-        /* =================== GLOBAL STYLES =================== */
         * {
             margin: 0;
             padding: 0;
@@ -28,10 +22,8 @@
             color: #ffffff;
             overflow-x: hidden;
             min-height: 100vh;
-            line-height: 1.6;
         }
         
-        /* =================== HEADER =================== */
         .header {
             background: linear-gradient(135deg, #1a1f3a 0%, #0f1324 100%);
             padding: 18px 30px;
@@ -39,18 +31,10 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            flex-wrap: wrap;
-            gap: 15px;
-            backdrop-filter: blur(10px);
             position: sticky;
             top: 0;
             z-index: 1000;
-        }
-        
-        .header-left {
-            display: flex;
-            align-items: center;
-            gap: 15px;
+            backdrop-filter: blur(10px);
         }
         
         .logo {
@@ -64,28 +48,15 @@
             -webkit-text-fill-color: transparent;
         }
         
-        .logo-icon {
-            font-size: 24px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            width: 36px;
-            height: 36px;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        
         .status-badge {
             padding: 8px 16px;
             border-radius: 20px;
             font-size: 12px;
             font-weight: 700;
             text-transform: uppercase;
-            letter-spacing: 1px;
             display: flex;
             align-items: center;
             gap: 6px;
-            transition: all 0.3s;
         }
         
         .status-badge.online {
@@ -112,95 +83,19 @@
             50% { opacity: 0.6; }
         }
         
-        /* =================== SYMBOL SELECTOR =================== */
-        .symbol-selector-container {
-            background: #1a1f3a;
-            border-radius: 12px;
-            padding: 15px;
-            margin: 20px;
-            border: 1px solid rgba(102, 126, 234, 0.2);
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-        }
-        
-        .symbol-selector {
-            display: flex;
-            gap: 10px;
-            overflow-x: auto;
-            padding-bottom: 5px;
-        }
-        
-        .symbol-selector::-webkit-scrollbar {
-            height: 6px;
-        }
-        
-        .symbol-selector::-webkit-scrollbar-track {
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 3px;
-        }
-        
-        .symbol-selector::-webkit-scrollbar-thumb {
-            background: rgba(102, 126, 234, 0.5);
-            border-radius: 3px;
-        }
-        
-        .symbol-btn {
-            padding: 10px 20px;
-            background: #2a2f4a;
-            border: 1px solid #3a3f5a;
-            border-radius: 8px;
-            color: #8b92b0;
-            cursor: pointer;
-            font-weight: 600;
-            transition: all 0.3s;
-            white-space: nowrap;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 13px;
-        }
-        
-        .symbol-btn:hover {
-            background: #3a3f5a;
-            border-color: #667eea;
-            color: #fff;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
-        }
-        
-        .symbol-btn.active {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-color: #667eea;
-            color: #fff;
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
-        }
-        
-        .symbol-btn .trade-badge {
-            background: #ef4444;
-            color: white;
-            font-size: 10px;
-            padding: 2px 6px;
-            border-radius: 10px;
-            font-weight: bold;
-            min-width: 18px;
-            text-align: center;
-        }
-        
-        /* =================== STATS GRID =================== */
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 15px;
-            margin: 0 20px 20px;
+            margin: 20px;
         }
         
         .stat-card {
             background: linear-gradient(135deg, #1a1f3a 0%, #2a2f4a 100%);
-            padding: 18px;
+            padding: 20px;
             border-radius: 12px;
             border: 1px solid rgba(102, 126, 234, 0.2);
-            position: relative;
-            overflow: hidden;
-            transition: transform 0.3s, box-shadow 0.3s;
+            transition: transform 0.3s;
         }
         
         .stat-card:hover {
@@ -208,46 +103,15 @@
             box-shadow: 0 8px 25px rgba(102, 126, 234, 0.15);
         }
         
-        .stat-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 3px;
-            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
-        }
-        
-        .stat-header {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 10px;
-        }
-        
-        .stat-icon {
-            width: 32px;
-            height: 32px;
-            border-radius: 8px;
-            background: rgba(102, 126, 234, 0.1);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #667eea;
-            font-size: 14px;
-        }
-        
         .stat-card h3 {
             color: #8b92b0;
             font-size: 12px;
             text-transform: uppercase;
-            letter-spacing: 1px;
             margin-bottom: 8px;
-            font-weight: 600;
         }
         
         .stat-value {
-            font-size: 24px;
+            font-size: 28px;
             font-weight: 700;
             margin-bottom: 5px;
         }
@@ -256,177 +120,47 @@
         .stat-value.negative { color: #ef4444; }
         .stat-value.neutral { color: #fff; }
         
-        .stat-change {
-            font-size: 12px;
-            color: #8b92b0;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-        
-        /* =================== CHART CONTAINER =================== */
         .chart-container {
             background: #1a1f3a;
             border-radius: 12px;
-            margin: 0 20px 20px;
+            margin: 20px;
             border: 1px solid rgba(102, 126, 234, 0.2);
-            overflow: hidden;
-            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+            padding: 20px;
         }
-        
-        .chart-header {
-            padding: 20px 20px 15px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-        }
-        
-        .chart-title {
-            font-size: 18px;
-            font-weight: 700;
-            margin-bottom: 15px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        
-        .chart-controls {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 15px;
-        }
-        
-        .timeframe-selector, .chart-type-selector {
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-        }
-        
-        .control-btn {
-            padding: 8px 16px;
-            background: #2a2f4a;
-            border: 1px solid #3a3f5a;
-            border-radius: 6px;
-            color: #8b92b0;
-            font-size: 12px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        
-        .control-btn:hover {
-            background: #3a3f5a;
-            color: #fff;
-        }
-        
-        .control-btn.active {
-            background: #667eea;
-            color: #fff;
-            border-color: #667eea;
-        }
-        
-        .market-info {
-            display: flex;
-            gap: 20px;
-            font-size: 13px;
-            flex-wrap: wrap;
-        }
-        
-        .market-info-item {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-        }
-        
-        .market-info-label {
-            color: #8b92b0;
-            font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-        
-        .market-info-value {
-            font-weight: 600;
-            color: #fff;
-        }
-        
-        .market-info-value.positive { color: #10b981; }
-        .market-info-value.negative { color: #ef4444; }
         
         #tradingChart {
-            height: 500px;
+            height: 400px;
             width: 100%;
         }
         
-        /* =================== TRADES PANEL =================== */
         .trades-panel {
             background: #1a1f3a;
             border-radius: 12px;
-            margin: 0 20px 20px;
+            margin: 20px;
             border: 1px solid rgba(102, 126, 234, 0.2);
-            overflow: hidden;
-        }
-        
-        .trades-header {
-            padding: 18px 20px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .trades-header h2 {
-            font-size: 16px;
-            font-weight: 700;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        
-        .trade-count {
-            background: rgba(102, 126, 234, 0.1);
-            color: #8b92b0;
-            font-size: 11px;
-            padding: 4px 10px;
-            border-radius: 20px;
-            font-weight: 600;
-        }
-        
-        .trades-list {
-            padding: 0 20px 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
+            padding: 20px;
         }
         
         .trade-item {
             background: #2a2f4a;
-            padding: 16px;
-            border-radius: 10px;
-            border-left: 4px solid;
-            display: grid;
-            grid-template-columns: auto 1fr auto;
-            gap: 15px;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            border-left: 4px solid #667eea;
+            display: flex;
+            justify-content: space-between;
             align-items: center;
-            transition: all 0.3s;
-            border-left-color: #667eea;
-        }
-        
-        .trade-item:hover {
-            transform: translateX(5px);
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
         }
         
         .trade-item.buy { border-left-color: #10b981; }
         .trade-item.sell { border-left-color: #ef4444; }
         
         .trade-type {
-            padding: 6px 12px;
+            padding: 5px 12px;
             border-radius: 6px;
             font-size: 11px;
             font-weight: 700;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
         }
         
         .trade-type.buy {
@@ -439,1471 +173,282 @@
             color: #ef4444;
         }
         
-        .trade-details {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-        
-        .trade-details .main {
-            font-size: 13px;
-            font-weight: 600;
-        }
-        
-        .trade-details .sub {
-            font-size: 11px;
-            color: #8b92b0;
-            display: flex;
-            gap: 15px;
-        }
-        
-        .trade-profit {
-            text-align: right;
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-        }
-        
-        .trade-profit .pips {
-            font-size: 14px;
-            font-weight: 700;
-        }
-        
-        .trade-profit .usd {
-            font-size: 12px;
-            font-weight: 600;
-        }
-        
-        .trade-profit.positive .pips,
-        .trade-profit.positive .usd { color: #10b981; }
-        
-        .trade-profit.negative .pips,
-        .trade-profit.negative .usd { color: #ef4444; }
-        
-        .no-trades {
-            text-align: center;
-            padding: 40px 20px;
-            color: #8b92b0;
-            font-size: 14px;
-        }
-        
-        /* =================== FOOTER =================== */
         .footer {
             text-align: center;
             padding: 20px;
             color: #8b92b0;
             font-size: 12px;
             border-top: 1px solid rgba(255, 255, 255, 0.05);
-            margin-top: 20px;
         }
         
-        .footer-stats {
-            display: flex;
-            justify-content: center;
-            gap: 30px;
-            margin-bottom: 10px;
-            flex-wrap: wrap;
-        }
-        
-        /* =================== DEBUG PANEL =================== */
-        .debug-panel {
-            background: rgba(42, 47, 74, 0.9);
-            border-radius: 8px;
-            padding: 15px;
-            margin: 20px;
-            border-left: 4px solid #ef4444;
-            font-family: 'Monaco', 'Courier New', monospace;
-            font-size: 12px;
-            display: none;
-            backdrop-filter: blur(10px);
-            max-height: 300px;
-            overflow-y: auto;
-        }
-        
-        .debug-panel.show {
-            display: block;
-            animation: slideDown 0.3s ease;
-        }
-        
-        @keyframes slideDown {
-            from { opacity: 0; transform: translateY(-10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        
-        .debug-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 10px;
-        }
-        
-        .debug-close {
-            background: none;
-            border: none;
-            color: #8b92b0;
-            cursor: pointer;
-            font-size: 14px;
-            padding: 5px 10px;
-            border-radius: 4px;
-        }
-        
-        .debug-close:hover {
-            background: rgba(255, 255, 255, 0.1);
-        }
-        
-        /* =================== LOADING OVERLAY =================== */
-        .loading-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(10, 14, 23, 0.95);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            z-index: 9999;
-            backdrop-filter: blur(5px);
-            transition: opacity 0.3s;
-        }
-        
-        .loading-spinner {
-            width: 50px;
-            height: 50px;
-            border: 3px solid rgba(102, 126, 234, 0.3);
-            border-top: 3px solid #667eea;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin-bottom: 20px;
-        }
-        
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        
-        .loading-progress {
-            width: 200px;
-            height: 4px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 2px;
-            margin-top: 20px;
-            overflow: hidden;
-        }
-        
-        .loading-progress-bar {
-            height: 100%;
-            background: linear-gradient(90deg, #667eea, #764ba2);
-            width: 0%;
-            transition: width 0.3s;
-            border-radius: 2px;
-        }
-        
-        /* =================== RESPONSIVE =================== */
         @media (max-width: 768px) {
-            .header { padding: 15px; flex-direction: column; align-items: flex-start; gap: 10px; }
-            .stats-grid { grid-template-columns: repeat(2, 1fr); margin: 10px; gap: 10px; }
-            .chart-controls { flex-direction: column; align-items: flex-start; gap: 10px; }
-            .market-info { width: 100%; justify-content: space-between; }
-            .trade-item { grid-template-columns: 1fr; text-align: center; gap: 10px; }
-            .trade-details .sub { justify-content: center; flex-wrap: wrap; gap: 10px; }
-            .trade-profit { text-align: center; }
-            .symbol-selector-container, .chart-container, .trades-panel { margin: 10px; }
-            .footer-stats { gap: 15px; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
         }
-        
-        @media (max-width: 480px) {
-            .stats-grid { grid-template-columns: 1fr; }
-            .market-info { flex-direction: column; gap: 10px; }
-            .chart-title { font-size: 16px; }
-            .footer-stats { flex-direction: column; gap: 10px; }
-        }
-        
-        /* =================== ANIMATIONS =================== */
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        
-        @keyframes priceUp {
-            0% { background-color: transparent; }
-            50% { background-color: rgba(16, 185, 129, 0.2); }
-            100% { background-color: transparent; }
-        }
-        
-        @keyframes priceDown {
-            0% { background-color: transparent; }
-            50% { background-color: rgba(239, 68, 68, 0.2); }
-            100% { background-color: transparent; }
-        }
-        
-        .price-up { animation: priceUp 1s ease; }
-        .price-down { animation: priceDown 1s ease; }
     </style>
 </head>
 <body>
 
-<!-- Loading Overlay -->
-    <div class="loading-overlay" id="loadingOverlay">
-        <div class="loading-spinner"></div>
-        <div style="color: #667eea; font-weight: 600; margin-bottom: 10px; text-align: center;">
-            <div id="loadingStatus">Initializing TradingView Monitor...</div>
-            <div style="font-size: 13px; color: #8b92b0; margin-top: 5px;" id="loadingSubstatus">
-                Loading dashboard...
-            </div>
-        </div>
-        <div class="loading-progress">
-            <div class="loading-progress-bar" id="loadingProgress"></div>
-        </div>
-    </div>
-    
-    <!-- Header -->
     <div class="header">
-        <div class="header-left">
-            <div class="logo">
-                <div class="logo-icon">🤖</div>
-                <span>BB Golden Scalper V3.6 ML</span>
-            </div>
-            <span class="status-badge connecting" id="statusBadge">
-                <i class="fas fa-sync-alt fa-spin"></i> CONNECTING
-            </span>
+        <div class="logo">
+            <span>🤖 BB Grid V5.0 - ML Trading Monitor</span>
         </div>
-        <div style="display: flex; align-items: center; gap: 15px;">
-            <div style="font-size: 13px; color: #8b92b0;">
-                <i class="fas fa-clock"></i> <span id="currentTime">--:--:--</span>
-            </div>
-            <button id="debugToggle" style="background: none; border: 1px solid rgba(102,126,234,0.3); color: #8b92b0; padding: 6px 12px; border-radius: 6px; font-size: 12px; cursor: pointer;">
-                <i class="fas fa-bug"></i> Debug
-            </button>
-        </div>
+        <span class="status-badge connecting" id="statusBadge">
+            <i class="fas fa-sync-alt fa-spin"></i> CONNECTING
+        </span>
     </div>
     
-    <!-- Debug Panel -->
-    <div class="debug-panel" id="debugPanel">
-        <div class="debug-header">
-            <strong style="color: #ef4444;"><i class="fas fa-bug"></i> DEBUG CONSOLE</strong>
-            <div style="display: flex; gap: 10px; align-items: center;">
-                <span style="font-size: 11px; color: #8b92b0;" id="debugStats">
-                    Memory: --
-                </span>
-                <button class="debug-close" id="debugClose"><i class="fas fa-times"></i></button>
-            </div>
-        </div>
-        <div id="debugContent" style="font-family: monospace; font-size: 11px; line-height: 1.5;">
-            <div>> System initializing...</div>
-        </div>
-    </div>
-    
-    <!-- Symbol Selector -->
-    <div class="symbol-selector-container">
-        <div class="symbol-selector" id="symbolSelector">
-            <button class="symbol-btn active" data-symbol="ALL">
-                <i class="fas fa-chart-bar"></i> ALL INSTRUMENTS
-            </button>
-        </div>
-    </div>
-    
-    <!-- Stats Grid -->
     <div class="stats-grid">
         <div class="stat-card">
-            <div class="stat-header">
-                <div class="stat-icon"><i class="fas fa-wallet"></i></div>
-                <div>
-                    <h3>💰 EQUITY</h3>
-                    <div class="stat-value neutral" id="equity">$0.00</div>
-                </div>
-            </div>
-            <div class="stat-change" id="equityChange">
-                <i class="fas fa-minus"></i> $0.00
-            </div>
+            <h3>💰 EQUITY</h3>
+            <div class="stat-value neutral" id="equity">$0.00</div>
         </div>
         
         <div class="stat-card">
-            <div class="stat-header">
-                <div class="stat-icon"><i class="fas fa-balance-scale"></i></div>
-                <div>
-                    <h3>📊 BALANCE</h3>
-                    <div class="stat-value neutral" id="balance">$0.00</div>
-                </div>
-            </div>
-            <div class="stat-change">Account Balance</div>
+            <h3>📊 BALANCE</h3>
+            <div class="stat-value neutral" id="balance">$0.00</div>
         </div>
         
         <div class="stat-card">
-            <div class="stat-header">
-                <div class="stat-icon"><i class="fas fa-chart-line"></i></div>
-                <div>
-                    <h3>💵 PROFIT/LOSS</h3>
-                    <div class="stat-value neutral" id="profit">$0.00</div>
-                </div>
-            </div>
-            <div class="stat-change" id="profitPips">
-                <i class="fas fa-arrows-alt-h"></i> 0.0 pips
-            </div>
+            <h3>💵 PROFIT/LOSS</h3>
+            <div class="stat-value neutral" id="profit">$0.00</div>
         </div>
         
         <div class="stat-card">
-            <div class="stat-header">
-                <div class="stat-icon"><i class="fas fa-exchange-alt"></i></div>
-                <div>
-                    <h3>📈 OPEN TRADES</h3>
-                    <div class="stat-value neutral" id="openTrades">0</div>
-                </div>
-            </div>
-            <div class="stat-change">Active Positions</div>
+            <h3>📈 OPEN TRADES</h3>
+            <div class="stat-value neutral" id="openTrades">0</div>
         </div>
         
         <div class="stat-card">
-            <div class="stat-header">
-                <div class="stat-icon"><i class="fas fa-brain"></i></div>
-                <div>
-                    <h3>🧠 ML CONFIDENCE</h3>
-                    <div class="stat-value neutral" id="mlConfidence">0%</div>
-                </div>
-            </div>
-            <div class="stat-change" id="mlTrained">
-                <i class="fas fa-graduation-cap"></i> Trained: 0x
-            </div>
+            <h3>🧠 ML CONFIDENCE</h3>
+            <div class="stat-value neutral" id="mlConfidence">0%</div>
+            <div style="font-size: 11px; color: #8b92b0;">Trained: <span id="mlTrained">0</span>x</div>
         </div>
         
         <div class="stat-card">
-            <div class="stat-header">
-                <div class="stat-icon"><i class="fas fa-satellite-dish"></i></div>
-                <div>
-                    <h3>📡 CONNECTION</h3>
-                    <div class="stat-value neutral" id="connectionStatus">OFFLINE</div>
-                </div>
-            </div>
-            <div class="stat-change" id="connectionUptime">
-                <i class="fas fa-clock"></i> Uptime: 0m
-            </div>
+            <h3>📡 STATUS</h3>
+            <div class="stat-value neutral" id="connectionStatus">OFFLINE</div>
         </div>
     </div>
     
-    <!-- Chart Container -->
     <div class="chart-container">
-        <div class="chart-header">
-            <div class="chart-title" id="chartTitle">
-                <i class="fas fa-chart-candlestick"></i>
-                <span>📈 LIVE CHART - Real-time Market Data</span>
-            </div>
-            
-            <div class="chart-controls">
-                <div class="timeframe-selector">
-                    <button class="control-btn active" data-tf="1">M1</button>
-                    <button class="control-btn" data-tf="5">M5</button>
-                    <button class="control-btn" data-tf="15">M15</button>
-                    <button class="control-btn" data-tf="60">H1</button>
-                    <button class="control-btn" data-tf="240">H4</button>
-                    <button class="control-btn" data-tf="D">D1</button>
-                </div>
-                
-                <div class="chart-type-selector">
-                    <button class="control-btn active" data-type="candlestick">
-                        <i class="fas fa-chart-candlestick"></i> Candle
-                    </button>
-                    <button class="control-btn" data-type="line">
-                        <i class="fas fa-chart-line"></i> Line
-                    </button>
-                    <button class="control-btn" data-type="area">
-                        <i class="fas fa-chart-area"></i> Area
-                    </button>
-                </div>
-            </div>
-            
-            <div class="market-info">
-                <div class="market-info-item">
-                    <span class="market-info-label">Live Price</span>
-                    <span class="market-info-value" id="currentPrice">--</span>
-                </div>
-                <div class="market-info-item">
-                    <span class="market-info-label">Bid/Ask</span>
-                    <span class="market-info-value" id="bidAsk">-- / --</span>
-                </div>
-                <div class="market-info-item">
-                    <span class="market-info-label">Spread</span>
-                    <span class="market-info-value" id="spreadValue">--</span>
-                </div>
-                <div class="market-info-item">
-                    <span class="market-info-label">Change (24h)</span>
-                    <span class="market-info-value neutral" id="dailyChange">--</span>
-                </div>
-                <div class="market-info-item">
-                    <span class="market-info-label">Timeframe</span>
-                    <span class="market-info-value" id="timeframeValue">M1</span>
-                </div>
-                <div class="market-info-item">
-                    <span class="market-info-label">Update</span>
-                    <span class="market-info-value" id="updateTimer">5s</span>
-                </div>
-            </div>
-        </div>
-        
+        <h2 style="margin-bottom: 15px;">📈 Live Chart - <span id="currentSymbol">Loading...</span></h2>
         <div id="tradingChart"></div>
     </div>
     
-    <!-- Trades Panel -->
     <div class="trades-panel">
-        <div class="trades-header">
-            <h2>
-                <i class="fas fa-list-alt"></i>
-                <span>Active Positions</span>
-                <span class="trade-count" id="tradeCount">(0 trades)</span>
-            </h2>
-            <div style="display: flex; align-items: center; gap: 15px;">
-                <div style="font-size: 12px; color: #8b92b0;">
-                    <i class="fas fa-sync-alt" id="refreshIcon" style="cursor: pointer;"></i>
-                    Auto-refresh: <span id="refreshTimer">5s</span>
-                </div>
-                <div style="font-size: 12px; color: #8b92b0; display: flex; align-items: center; gap: 5px;">
-                    <i class="fas fa-database"></i>
-                    <span id="dataStatus">No data</span>
-                </div>
-            </div>
-        </div>
-        
-        <div class="trades-list" id="tradesList">
-            <div class="no-trades">
-                <i class="fas fa-box-open" style="font-size: 24px; margin-bottom: 10px;"></i><br>
-                No active trades found
+        <h2 style="margin-bottom: 15px;">Active Positions (<span id="tradeCount">0</span>)</h2>
+        <div id="tradesList">
+            <div style="text-align: center; color: #8b92b0; padding: 40px;">
+                <i class="fas fa-box-open" style="font-size: 48px; margin-bottom: 10px;"></i><br>
+                No active trades
             </div>
         </div>
     </div>
     
-    <!-- Footer -->
     <div class="footer">
-        <div class="footer-stats">
-            <div>
-                <i class="fas fa-database" style="color: #667eea;"></i>
-                Last Update: <span id="lastUpdate">--:--:--</span>
-            </div>
-            <div>
-                <i class="fas fa-server" style="color: #10b981;"></i>
-                Uptime: <span id="uptimeFooter">0m</span>
-            </div>
-            <div>
-                <i class="fas fa-bolt" style="color: #f59e0b;"></i>
-                Ping: <span id="pingTime">-- ms</span>
-            </div>
-            <div>
-                <i class="fas fa-chart-line" style="color: #8b92b0;"></i>
-                Trades: <span id="totalTrades">0</span>
-            </div>
-        </div>
-        <div>© 2025 BB Golden Scalper V3.6 ML Advanced - TradingView Monitor v2.0</div>
-        <div style="font-size: 10px; margin-top: 5px; color: #667eea;">
-            Real-time Monitoring • Auto-refresh • Professional Dashboard
-        </div>
+        <div>Last Update: <span id="lastUpdate">--:--:--</span></div>
+        <div>© 2025 BB Grid V5.0 ML - Advanced Trading Monitor</div>
     </div>
     
     <script>
-	
-// =================== GLOBAL VARIABLES ===================
         let chart = null;
         let candlestickSeries = null;
-        let lineSeries = null;
-        let areaSeries = null;
-        let currentSymbol = 'ALL';
-        let allData = {};
-        let connectionStart = null;
-        let isConnected = false;
-        let consecutiveErrors = 0;
-        let realMarketData = {};
-        let currentTimeframe = '1';
-        let currentChartType = 'candlestick';
-        let refreshInterval = 5000;
-        let refreshTimer = null;
-        let updateCounter = 0;
+        let currentData = null;
         
-        // =================== INSTRUMENT SPECIFICATIONS ===================
-        function getInstrumentSpec(symbol) {
-            // Standard broker specifications
-            const specs = {
-                // Forex Majors (5 digits)
-                'EURUSD': { digits: 5, tickSize: 0.00001, pipMultiplier: 100000, type: 'forex' },
-                'GBPUSD': { digits: 5, tickSize: 0.00001, pipMultiplier: 100000, type: 'forex' },
-                'USDCHF': { digits: 5, tickSize: 0.00001, pipMultiplier: 100000, type: 'forex' },
-                'AUDUSD': { digits: 5, tickSize: 0.00001, pipMultiplier: 100000, type: 'forex' },
-                'NZDUSD': { digits: 5, tickSize: 0.00001, pipMultiplier: 100000, type: 'forex' },
-                'EURGBP': { digits: 5, tickSize: 0.00001, pipMultiplier: 100000, type: 'forex' },
-                'EURJPY': { digits: 3, tickSize: 0.001, pipMultiplier: 1000, type: 'forex' },
-                
-                // JPY Pairs (3 digits)
-                'USDJPY': { digits: 3, tickSize: 0.001, pipMultiplier: 1000, type: 'forex' },
-                'GBPJPY': { digits: 3, tickSize: 0.001, pipMultiplier: 1000, type: 'forex' },
-                'CHFJPY': { digits: 3, tickSize: 0.001, pipMultiplier: 1000, type: 'forex' },
-                'AUDJPY': { digits: 3, tickSize: 0.001, pipMultiplier: 1000, type: 'forex' },
-                'CADJPY': { digits: 3, tickSize: 0.001, pipMultiplier: 1000, type: 'forex' },
-                'NZDJPY': { digits: 3, tickSize: 0.001, pipMultiplier: 1000, type: 'forex' },
-                
-                // Metals (2-3 digits)
-                'XAUUSD': { digits: 2, tickSize: 0.01, pipMultiplier: 100, type: 'metal' },
-                'XAGUSD': { digits: 3, tickSize: 0.001, pipMultiplier: 1000, type: 'metal' },
-                'GOLD': { digits: 2, tickSize: 0.01, pipMultiplier: 100, type: 'metal' },
-                'SILVER': { digits: 3, tickSize: 0.001, pipMultiplier: 1000, type: 'metal' },
-                
-                // Crypto (2 digits)
-                'BTCUSD': { digits: 2, tickSize: 0.01, pipMultiplier: 100, type: 'crypto' },
-                'ETHUSD': { digits: 2, tickSize: 0.01, pipMultiplier: 100, type: 'crypto' },
-                'LTCUSD': { digits: 2, tickSize: 0.01, pipMultiplier: 100, type: 'crypto' },
-                'XRPUSD': { digits: 5, tickSize: 0.00001, pipMultiplier: 100000, type: 'crypto' },
-                
-                // Indices (2 digits)
-                'US30': { digits: 2, tickSize: 0.01, pipMultiplier: 100, type: 'index' },
-                'NAS100': { digits: 2, tickSize: 0.01, pipMultiplier: 100, type: 'index' },
-                'SPX500': { digits: 2, tickSize: 0.01, pipMultiplier: 100, type: 'index' },
-                'GER40': { digits: 2, tickSize: 0.01, pipMultiplier: 100, type: 'index' },
-                'UK100': { digits: 2, tickSize: 0.01, pipMultiplier: 100, type: 'index' },
-                'JP225': { digits: 0, tickSize: 1, pipMultiplier: 1, type: 'index' },
-                
-                // Oil/Commodities (3 digits)
-                'USOIL': { digits: 3, tickSize: 0.001, pipMultiplier: 1000, type: 'commodity' },
-                'UKOIL': { digits: 3, tickSize: 0.001, pipMultiplier: 1000, type: 'commodity' },
-                
-                // Default for unknown symbols
-                'TEST': { digits: 5, tickSize: 0.00001, pipMultiplier: 100000, type: 'forex' },
-            };
-            
-            // Return spec or default to forex 5-digit
-            return specs[symbol] || { digits: 5, tickSize: 0.00001, pipMultiplier: 100000, type: 'forex' };
-        }
-        
-        function formatPrice(price, symbol) {
-            const spec = getInstrumentSpec(symbol);
-            return parseFloat(price).toFixed(spec.digits);
-        }
-        
-        function calculatePips(openPrice, currentPrice, symbol, tradeType) {
-            const spec = getInstrumentSpec(symbol);
-            const priceDiff = tradeType === 'BUY' ? 
-                (currentPrice - openPrice) : 
-                (openPrice - currentPrice);
-            
-            // Calculate pips based on instrument type
-            return priceDiff * spec.pipMultiplier;
-        }
-        
-        // =================== DEBUG SYSTEM ===================
-        function logDebug(message, type = 'info') {
-            const debugPanel = document.getElementById('debugContent');
-            const timestamp = new Date().toLocaleTimeString();
-            const typeIcon = type === 'error' ? '❌' : type === 'warning' ? '⚠️' : 'ℹ️';
-            const typeColor = type === 'error' ? '#ef4444' : type === 'warning' ? '#f59e0b' : '#8b92b0';
-            
-            const logEntry = document.createElement('div');
-            logEntry.innerHTML = `<span style="color: #667eea;">[${timestamp}]</span> <span style="color: ${typeColor};">${typeIcon} ${message}</span>`;
-            logEntry.style.marginBottom = '3px';
-            logEntry.style.padding = '2px 0';
-            logEntry.style.borderBottom = '1px solid rgba(255,255,255,0.05)';
-            
-            debugPanel.appendChild(logEntry);
-            debugPanel.scrollTop = debugPanel.scrollHeight;
-            
-            if (debugPanel.children.length > 100) {
-                debugPanel.removeChild(debugPanel.firstChild);
-            }
-            
-            console.log(`[${type.toUpperCase()}] ${message}`);
-        }
-        
-        // =================== LOADING SYSTEM ===================
-        function updateLoadingStatus(status, substatus = '') {
-            document.getElementById('loadingStatus').textContent = status;
-            if (substatus) {
-                document.getElementById('loadingSubstatus').textContent = substatus;
-            }
-        }
-        
-        function updateLoadingProgress(percent) {
-            document.getElementById('loadingProgress').style.width = percent + '%';
-        }
-
-        function hideLoadingOverlay() {
-            const overlay = document.getElementById('loadingOverlay');
-            if (overlay) {
-                overlay.style.opacity = '0';
-                setTimeout(() => {
-                    overlay.style.display = 'none';
-                    logDebug('✅ Loading overlay hidden', 'info');
-                }, 300);
-            }
-        }
-        
-        // =================== INITIALIZATION ===================
-        async function initApplication() {
-            updateLoadingStatus('Initializing TradingView Monitor...', 'v2.1 - Correct Precision');
-            updateLoadingProgress(10);
-            
-            logDebug('🚀 Initializing TradingView Monitor v2.1 - Correct Digits & Ticks', 'info');
-            
-            updateLoadingStatus('Setting up time display...');
-            updateLoadingProgress(20);
-            initTimeDisplay();
-            
-            updateLoadingStatus('Initializing chart system...');
-            updateLoadingProgress(40);
-            await initChart();
-            
-            updateLoadingStatus('Setting up event listeners...');
-            updateLoadingProgress(60);
-            initEventListeners();
-            
-            updateLoadingStatus('Starting data polling...');
-            updateLoadingProgress(80);
-            startDataPolling();
-            
-            updateLoadingStatus('Ready!');
-            updateLoadingProgress(100);
-            
-            setTimeout(() => {
-                hideLoadingOverlay();
-            }, 1500);
-        }
-        
-        function initTimeDisplay() {
-            function updateTime() {
-                const now = new Date();
-                document.getElementById('currentTime').textContent = 
-                    now.toLocaleTimeString('id-ID', { hour12: false });
-            }
-            updateTime();
-            setInterval(updateTime, 1000);
-        }
-        
-        function initEventListeners() {
-            document.getElementById('debugToggle').addEventListener('click', () => {
-                document.getElementById('debugPanel').classList.toggle('show');
-                logDebug('Debug panel toggled', 'info');
-            });
-            
-            document.getElementById('debugClose').addEventListener('click', () => {
-                document.getElementById('debugPanel').classList.remove('show');
-            });
-            
-            document.getElementById('refreshIcon').addEventListener('click', () => {
-                updateDashboard();
-                logDebug('Manual refresh triggered', 'info');
-            });
-            
-            document.querySelectorAll('.timeframe-selector .control-btn').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    document.querySelectorAll('.timeframe-selector .control-btn').forEach(b => {
-                        b.classList.remove('active');
-                    });
-                    this.classList.add('active');
-                    
-                    const newTimeframe = this.dataset.tf;
-                    currentTimeframe = newTimeframe;
-                    
-                    document.getElementById('timeframeValue').textContent = 
-                        getTimeframeLabel(newTimeframe);
-                    
-                    if (currentSymbol !== 'ALL') {
-                        updateChartTimeframe(currentSymbol, newTimeframe);
-                    }
-                    
-                    logDebug(`Timeframe changed to ${getTimeframeLabel(newTimeframe)}`, 'info');
-                });
-            });
-            
-            document.querySelectorAll('.chart-type-selector .control-btn').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    document.querySelectorAll('.chart-type-selector .control-btn').forEach(b => {
-                        b.classList.remove('active');
-                    });
-                    this.classList.add('active');
-                    
-                    currentChartType = this.dataset.type;
-                    changeChartType(currentChartType);
-                    
-                    logDebug(`Chart type changed to ${currentChartType}`, 'info');
-                });
-            });
-            
-            initSymbolSelectorEvents();
-        }
-        
-        function initSymbolSelectorEvents() {
-            document.getElementById('symbolSelector').addEventListener('click', (e) => {
-                const symbolBtn = e.target.closest('.symbol-btn');
-                if (symbolBtn) {
-                    const symbol = symbolBtn.dataset.symbol;
-                    if (symbol) {
-                        switchSymbol(symbol);
-                    }
-                }
-            });
-        }
-        
-        // =================== DATA POLLING SYSTEM ===================
-        function startDataPolling() {
-            let seconds = 5;
-            
-            refreshTimer = setInterval(() => {
-                seconds--;
-                document.getElementById('refreshTimer').textContent = `${seconds}s`;
-                document.getElementById('updateTimer').textContent = `${seconds}s`;
-                
-                if (seconds <= 0) {
-                    updateDashboard();
-                    seconds = 5;
-                }
-            }, 1000);
-            
-            setTimeout(() => {
-                updateDashboard();
-            }, 1000);
-            
-            logDebug('Polling system started (5s interval)', 'info');
-        }
-        
-        // =================== CHART SYSTEM (FIXED WITH CORRECT PRECISION) ===================
-        async function initChart() {
-            logDebug('Initializing TradingView chart...', 'info');
-            
+        // Initialize Chart
+        function initChart() {
             const chartContainer = document.getElementById('tradingChart');
             
+            chart = LightweightCharts.createChart(chartContainer, {
+                width: chartContainer.clientWidth,
+                height: 400,
+                layout: {
+                    background: { color: '#0a0e17' },
+                    textColor: '#D9D9D9',
+                },
+                grid: {
+                    vertLines: { color: 'rgba(42, 46, 57, 0.5)' },
+                    horzLines: { color: 'rgba(42, 46, 57, 0.5)' },
+                },
+                rightPriceScale: {
+                    borderColor: 'rgba(42, 46, 57, 0.8)',
+                },
+                timeScale: {
+                    borderColor: 'rgba(42, 46, 57, 0.8)',
+                    timeVisible: true,
+                },
+            });
+            
+            candlestickSeries = chart.addCandlestickSeries({
+                upColor: '#10b981',
+                downColor: '#ef4444',
+                borderDownColor: '#ef4444',
+                borderUpColor: '#10b981',
+                wickDownColor: '#ef4444',
+                wickUpColor: '#10b981',
+            });
+            
+            window.addEventListener('resize', () => {
+                chart.applyOptions({ width: chartContainer.clientWidth });
+            });
+        }
+        
+        // Fetch Data from API
+        async function fetchTradeData() {
             try {
-                chart = LightweightCharts.createChart(chartContainer, {
-                    width: chartContainer.clientWidth,
-                    height: 500,
-                    layout: {
-                        background: { color: '#0a0e17' },
-                        textColor: '#D9D9D9',
-                        fontSize: 12,
-                    },
-                    grid: {
-                        vertLines: { color: 'rgba(42, 46, 57, 0.5)' },
-                        horzLines: { color: 'rgba(42, 46, 57, 0.5)' },
-                    },
-                    crosshair: {
-                        mode: LightweightCharts.CrosshairMode.Normal,
-                        vertLine: {
-                            width: 1,
-                            color: 'rgba(101, 126, 234, 0.3)',
-                            style: LightweightCharts.LineStyle.Solid,
-                            labelBackgroundColor: '#667eea',
-                        },
-                        horzLine: {
-                            width: 1,
-                            color: 'rgba(101, 126, 234, 0.3)',
-                            labelBackgroundColor: '#667eea',
-                        },
-                    },
-                    rightPriceScale: {
-                        borderColor: 'rgba(42, 46, 57, 0.8)',
-                        scaleMargins: { top: 0.1, bottom: 0.1 },
-                        entireTextOnly: true,
-                    },
-                    timeScale: {
-                        borderColor: 'rgba(42, 46, 57, 0.8)',
-                        timeVisible: true,
-                        secondsVisible: false,
-                        rightOffset: 10,
-                        barSpacing: 6,
-                        minBarSpacing: 3,
-                        fixLeftEdge: true,
-                        fixRightEdge: true,
-                    },
-                    handleScale: {
-                        mouseWheel: true,
-                        pinch: true,
-                        axisPressedMouseMove: true,
-                    },
-                    handleScroll: {
-                        mouseWheel: true,
-                        pressedMouseMove: true,
-                        horzTouchDrag: true,
-                        vertTouchDrag: true,
-                    },
-                });
-                
-                // Create initial candlestick series with default precision
-                candlestickSeries = chart.addCandlestickSeries({
-                    upColor: '#10b981',
-                    downColor: '#ef4444',
-                    borderDownColor: '#ef4444',
-                    borderUpColor: '#10b981',
-                    wickDownColor: '#ef4444',
-                    wickUpColor: '#10b981',
-                    priceFormat: {
-                        type: 'price',
-                        precision: 5,
-                        minMove: 0.00001,
-                    },
-                    priceLineVisible: false,
-                });
-                
-                candlestickSeries.setData([]);
-                
-                window.addEventListener('resize', () => {
-                    chart.applyOptions({ width: chartContainer.clientWidth });
-                });
-                
-                logDebug('✅ TradingView chart initialized successfully', 'info');
-                
-            } catch (error) {
-                logDebug(`Failed to initialize chart: ${error.message}`, 'error');
-                throw error;
-            }
-        }
-        
-        function updateChartPrecision(symbol) {
-            if (!chart) return;
-            
-            const spec = getInstrumentSpec(symbol);
-            
-            // Update series precision
-            const series = candlestickSeries || lineSeries || areaSeries;
-            if (series) {
-                series.applyOptions({
-                    priceFormat: {
-                        type: 'price',
-                        precision: spec.digits,
-                        minMove: spec.tickSize,
-                    }
-                });
-                
-                logDebug(`Chart precision updated: ${spec.digits} digits, tick: ${spec.tickSize}`, 'info');
-            }
-        }
-        
-        function changeChartType(type) {
-            if (!chart) return;
-            
-            if (candlestickSeries) chart.removeSeries(candlestickSeries);
-            if (lineSeries) chart.removeSeries(lineSeries);
-            if (areaSeries) chart.removeSeries(areaSeries);
-            
-            candlestickSeries = null;
-            lineSeries = null;
-            areaSeries = null;
-            
-            const spec = getInstrumentSpec(currentSymbol);
-            
-            switch(type) {
-                case 'candlestick':
-                    candlestickSeries = chart.addCandlestickSeries({
-                        upColor: '#10b981',
-                        downColor: '#ef4444',
-                        borderDownColor: '#ef4444',
-                        borderUpColor: '#10b981',
-                        wickDownColor: '#ef4444',
-                        wickUpColor: '#10b981',
-                        priceFormat: {
-                            type: 'price',
-                            precision: spec.digits,
-                            minMove: spec.tickSize,
-                        },
-                        priceLineVisible: false,
-                    });
-                    break;
-                    
-                case 'line':
-                    lineSeries = chart.addLineSeries({
-                        color: '#667eea',
-                        lineWidth: 2,
-                        crosshairMarkerVisible: true,
-                        priceFormat: {
-                            type: 'price',
-                            precision: spec.digits,
-                            minMove: spec.tickSize,
-                        },
-                        priceLineVisible: false,
-                    });
-                    break;
-                    
-                case 'area':
-                    areaSeries = chart.addAreaSeries({
-                        topColor: 'rgba(102, 126, 234, 0.4)',
-                        bottomColor: 'rgba(102, 126, 234, 0.0)',
-                        lineColor: '#667eea',
-                        lineWidth: 2,
-                        priceFormat: {
-                            type: 'price',
-                            precision: spec.digits,
-                            minMove: spec.tickSize,
-                        },
-                        priceLineVisible: false,
-                    });
-                    break;
-            }
-            
-            if (currentSymbol && currentSymbol !== 'ALL' && 
-                realMarketData[currentSymbol] && 
-                realMarketData[currentSymbol][currentTimeframe]) {
-                
-                const data = realMarketData[currentSymbol][currentTimeframe];
-                const series = candlestickSeries || lineSeries || areaSeries;
-                
-                if (series) {
-                    series.setData(data);
-                    chart.timeScale().fitContent();
-                    chart.timeScale().scrollToPosition(-1);
-                }
-            }
-        }
-        
-        // =================== FIXED CHART UPDATE FUNCTION WITH CORRECT PRECISION ===================
-        function smoothUpdateChartPrice(symbol, currentPrice) {
-            if (!currentPrice || currentPrice === 0) {
-                logDebug(`No valid price for ${symbol}`, 'warning');
-                return;
-            }
-            
-            // Update chart precision for this symbol
-            updateChartPrecision(symbol);
-            
-            const spec = getInstrumentSpec(symbol);
-            
-            if (!realMarketData[symbol]) realMarketData[symbol] = {};
-            
-            let existingData = realMarketData[symbol][currentTimeframe];
-            
-            if (!existingData || existingData.length === 0) {
-                generateInitialChartData(symbol, currentPrice);
-                return;
-            }
-            
-            let lastCandle = existingData[existingData.length - 1];
-            const currentTime = Math.floor(Date.now() / 1000);
-            const tfMinutes = getTimeframeMinutes(currentTimeframe);
-            
-            const candleStartTime = Math.floor(lastCandle.time / (tfMinutes * 60)) * (tfMinutes * 60);
-            const candleEndTime = candleStartTime + (tfMinutes * 60);
-            
-            if (currentTime < candleEndTime) {
-                // UPDATE CANDLE - Rounded to correct precision
-                const updatedCandle = {
-                    time: candleStartTime,
-                    open: parseFloat(lastCandle.open.toFixed(spec.digits)),
-                    high: parseFloat(Math.max(lastCandle.high, currentPrice).toFixed(spec.digits)),
-                    low: parseFloat(Math.min(lastCandle.low, currentPrice).toFixed(spec.digits)),
-                    close: parseFloat(currentPrice.toFixed(spec.digits))
-                };
-                
-                existingData[existingData.length - 1] = updatedCandle;
-                
-                const series = candlestickSeries || lineSeries || areaSeries;
-                if (series) {
-                    series.update(updatedCandle);
-                }
-                
-                logDebug(`🔄 Smooth update: ${formatPrice(currentPrice, symbol)} [${spec.digits}d]`, 'info');
-                
-            } else {
-                // NEW CANDLE - Rounded to correct precision
-                const newCandleStartTime = Math.floor(currentTime / (tfMinutes * 60)) * (tfMinutes * 60);
-                
-                const newCandle = {
-                    time: newCandleStartTime,
-                    open: parseFloat(lastCandle.close.toFixed(spec.digits)),
-                    high: parseFloat(currentPrice.toFixed(spec.digits)),
-                    low: parseFloat(currentPrice.toFixed(spec.digits)),
-                    close: parseFloat(currentPrice.toFixed(spec.digits))
-                };
-                
-                existingData.push(newCandle);
-                
-                if (existingData.length > 500) {
-                    existingData.shift();
-                }
-                
-                const series = candlestickSeries || lineSeries || areaSeries;
-                if (series) {
-                    series.setData(existingData);
-                    chart.timeScale().scrollToPosition(-1);
-                }
-                
-                logDebug(`🆕 New candle: ${formatPrice(currentPrice, symbol)} [${newCandleStartTime}]`, 'info');
-            }
-            
-            realMarketData[symbol][currentTimeframe] = existingData;
-        }
-        
-        function generateInitialChartData(symbol, basePrice) {
-            const count = 100;
-            const tfMinutes = getTimeframeMinutes(currentTimeframe);
-            const volatility = getVolatilityForSymbol(symbol);
-            const spec = getInstrumentSpec(symbol);
-            const candles = [];
-            
-            let currentPrice = basePrice;
-            const currentTime = Math.floor(Date.now() / 1000);
-            
-            for (let i = count - 1; i >= 0; i--) {
-                const candleTime = Math.floor((currentTime - (i * tfMinutes * 60)) / (tfMinutes * 60)) * (tfMinutes * 60);
-                
-                const change = (Math.random() - 0.5) * 2 * volatility;
-                const newPrice = currentPrice * (1 + change);
-                
-                const open = currentPrice;
-                const close = newPrice;
-                const high = Math.max(open, close) * (1 + Math.random() * volatility * 0.3);
-                const low = Math.min(open, close) * (1 - Math.random() * volatility * 0.3);
-                
-                candles.push({
-                    time: candleTime,
-                    open: parseFloat(open.toFixed(spec.digits)),
-                    high: parseFloat(high.toFixed(spec.digits)),
-                    low: parseFloat(low.toFixed(spec.digits)),
-                    close: parseFloat(close.toFixed(spec.digits))
-                });
-                
-                currentPrice = close;
-            }
-            
-            if (candles.length > 0) {
-                candles[candles.length - 1].close = parseFloat(basePrice.toFixed(spec.digits));
-                candles[candles.length - 1].high = parseFloat(Math.max(candles[candles.length - 1].high, basePrice).toFixed(spec.digits));
-                candles[candles.length - 1].low = parseFloat(Math.min(candles[candles.length - 1].low, basePrice).toFixed(spec.digits));
-            }
-            
-            if (!realMarketData[symbol]) realMarketData[symbol] = {};
-            realMarketData[symbol][currentTimeframe] = candles;
-            
-            updateChartPrecision(symbol);
-            
-            const series = candlestickSeries || lineSeries || areaSeries;
-            if (series) {
-                series.setData(candles);
-                chart.timeScale().fitContent();
-                chart.timeScale().scrollToPosition(-1);
-                logDebug(`📊 Initial chart for ${symbol}: ${formatPrice(basePrice, symbol)} [${spec.digits}d]`, 'info');
-            }
-        }
-        
-        function getTimeframeMinutes(tf) {
-            const tfMap = {
-                '1': 1, '5': 5, '15': 15,
-                '60': 60, '240': 240, 'D': 1440
-            };
-            return tfMap[tf] || 1;
-        }
-        
-        function getVolatilityForSymbol(symbol) {
-            const volatilityMap = {
-                'XAUUSD': 0.002, 'EURUSD': 0.0001, 'GBPUSD': 0.0001,
-                'USDJPY': 0.0001, 'BTCUSD': 0.005, 'ETHUSD': 0.008,
-                'TEST': 0.0005, 'US30': 0.001, 'NAS100': 0.0015
-            };
-            return volatilityMap[symbol] || 0.0002;
-        }
-        
-        function updateChartForSymbol(symbol, data) {
-            if (!chart) return;
-            
-            const spec = getInstrumentSpec(symbol);
-            const currentPrice = parseFloat(data.current_price) || 0;
-            const bidPrice = parseFloat(data.bid_price) || (currentPrice - spec.tickSize);
-            const askPrice = parseFloat(data.ask_price) || (currentPrice + spec.tickSize);
-            const spread = parseInt(data.spread) || 10;
-            
-            const basePrice = getBasePriceForSymbol(symbol);
-            const dailyChange = ((currentPrice - basePrice) / basePrice) * 100;
-            const changeEmoji = dailyChange >= 0 ? '📈' : '📉';
-            
-            document.getElementById('chartTitle').innerHTML = `
-                <i class="fas fa-chart-candlestick"></i>
-                <span>${changeEmoji} ${symbol} • ${getTimeframeLabel(currentTimeframe)} • ${formatPrice(currentPrice, symbol)} 
-                <span style="color:${dailyChange >= 0 ? '#10b981' : '#ef4444'}; font-size: 14px;">${dailyChange >= 0 ? '+' : ''}${dailyChange.toFixed(2)}%</span></span>
-            `;
-            
-            document.getElementById('currentPrice').textContent = formatPrice(currentPrice, symbol);
-            document.getElementById('bidAsk').textContent = `${formatPrice(bidPrice, symbol)} / ${formatPrice(askPrice, symbol)}`;
-            document.getElementById('spreadValue').textContent = `${spread} pips`;
-            document.getElementById('dailyChange').textContent = `${dailyChange >= 0 ? '+' : ''}${dailyChange.toFixed(2)}%`;
-            document.getElementById('dailyChange').className = `market-info-value ${dailyChange >= 0 ? 'positive' : 'negative'}`;
-            
-            smoothUpdateChartPrice(symbol, currentPrice);
-        }
-        
-        function updateChartTimeframe(symbol, timeframe) {
-            if (symbol && symbol !== 'ALL') {
-                if (realMarketData[symbol]) {
-                    delete realMarketData[symbol][currentTimeframe];
-                }
-                const currentPrice = parseFloat(document.getElementById('currentPrice').textContent) || 0;
-                if (currentPrice > 0) {
-                    smoothUpdateChartPrice(symbol, currentPrice);
-                }
-            }
-        }
-		
-// =================== DATA FETCHING (FIXED) ===================
-        async function updateDashboard() {
-            updateCounter++;
-            logDebug(`Fetching dashboard data... (Update #${updateCounter})`, 'info');
-            
-            try {
-                const startTime = Date.now();
-                const response = await fetch(`/api/get_all_symbols.js?t=${Date.now()}`);
-                
-                const ping = Date.now() - startTime;
-                document.getElementById('pingTime').textContent = `${ping} ms`;
-                
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                }
-                
+                const response = await fetch('https://cg-ashy-eta.vercel.app/api/get_trades.js');
                 const data = await response.json();
                 
-                if (data.status === 'error' || data.status === 'no_data') {
-                    logDebug(`API response: ${data.message}`, 'warning');
-                    updateConnectionStatus(false, data.message);
-                    document.getElementById('dataStatus').textContent = 'No data';
-                    document.getElementById('dataStatus').style.color = '#f59e0b';
-                    return;
+                if (data.status === 'success' && data.latest) {
+                    currentData = data.latest;
+                    updateDashboard(currentData);
+                    updateStatus(true);
+                } else {
+                    updateStatus(false);
                 }
-                
-                const { _summary, ...symbolsData } = data;
-                
-                allData = symbolsData;
-                const symbols = Object.keys(symbolsData);
-                
-                logDebug(`Data received: ${symbols.length} symbols, ${_summary?.total_open_trades || 0} open trades`, 'info');
-                
-                updateSymbolSelector(symbols);
-                
-                document.getElementById('dataStatus').textContent = `${symbols.length} symbols`;
-                document.getElementById('dataStatus').style.color = '#10b981';
-                document.getElementById('totalTrades').textContent = _summary?.total_open_trades || 0;
-                
-                if (currentSymbol === 'ALL' && symbols.length > 0) {
-                    const symbolsWithTrades = symbols.filter(s => 
-                        allData[s].open_trades > 0 || (allData[s].trades && allData[s].trades.length > 0)
-                    );
-                    
-                    if (symbolsWithTrades.length > 0) {
-                        const newSymbol = symbolsWithTrades[0];
-                        if (newSymbol !== currentSymbol) {
-                            switchSymbol(newSymbol);
-                        }
-                    } else if (symbols.length > 0) {
-                        const newSymbol = symbols[0];
-                        if (newSymbol !== currentSymbol) {
-                            switchSymbol(newSymbol);
-                        }
-                    }
-                }
-                
-                showSymbolData(currentSymbol);
-                updateConnectionStatus(true);
-                
-                const now = new Date();
-                document.getElementById('lastUpdate').textContent = 
-                    now.toLocaleTimeString('id-ID', { hour12: false });
-                
-                logDebug('Dashboard update complete', 'info');
-                
             } catch (error) {
-                updateConnectionStatus(false, error.message);
-                logDebug(`Fetch error: ${error.message}`, 'error');
-                document.getElementById('dataStatus').textContent = 'Error';
-                document.getElementById('dataStatus').style.color = '#ef4444';
+                console.error('Fetch error:', error);
+                updateStatus(false);
             }
         }
         
-        // =================== SYMBOL MANAGEMENT ===================
-        function updateSymbolSelector(symbols) {
-            const selector = document.getElementById('symbolSelector');
+        // Update Dashboard
+        function updateDashboard(data) {
+            // Update stats
+            document.getElementById('equity').textContent = `$${data.equity.toFixed(2)}`;
+            document.getElementById('balance').textContent = `$${data.balance.toFixed(2)}`;
+            document.getElementById('profit').textContent = `$${data.profit.toFixed(2)}`;
+            document.getElementById('openTrades').textContent = data.open_trades || 0;
+            document.getElementById('mlConfidence').textContent = `${(data.ml_confidence * 100).toFixed(0)}%`;
+            document.getElementById('mlTrained').textContent = data.ml_trained || 0;
+            document.getElementById('currentSymbol').textContent = data.symbol;
             
-            const allBtn = selector.querySelector('[data-symbol="ALL"]');
-            selector.innerHTML = '';
-            selector.appendChild(allBtn);
+            // Update profit color
+            const profitEl = document.getElementById('profit');
+            profitEl.className = `stat-value ${data.profit >= 0 ? 'positive' : 'negative'}`;
             
-            symbols.forEach(symbol => {
-                const hasTrades = allData[symbol] && 
-                    (allData[symbol].open_trades > 0 || 
-                     (allData[symbol].trades && allData[symbol].trades.length > 0));
-                
-                const btn = document.createElement('button');
-                btn.className = `symbol-btn ${currentSymbol === symbol ? 'active' : ''}`;
-                btn.dataset.symbol = symbol;
-                btn.innerHTML = symbol;
-                
-                if (hasTrades) {
-                    const badge = document.createElement('span');
-                    badge.className = 'trade-badge';
-                    badge.textContent = allData[symbol].open_trades || allData[symbol].trades?.length || '!';
-                    btn.appendChild(badge);
-                }
-                
-                selector.appendChild(btn);
-            });
-        }
-        
-        function switchSymbol(symbol) {
-            currentSymbol = symbol;
-            
-            document.querySelectorAll('.symbol-btn').forEach(btn => {
-                btn.classList.toggle('active', btn.dataset.symbol === symbol);
-            });
-            
-            showSymbolData(symbol);
-            
-            logDebug(`Switched to symbol: ${symbol}`, 'info');
-        }
-        
-        // =================== UI UPDATES (FIXED) ===================
-        function showSymbolData(symbol) {
-            const data = symbol === 'ALL' ? aggregateAllData() : allData[symbol];
-            
-            if (!data) {
-                logDebug(`No data for symbol: ${symbol}`, 'warning');
-                document.getElementById('chartTitle').innerHTML = 
-                    '<i class="fas fa-chart-candlestick"></i> <span>📈 NO DATA AVAILABLE</span>';
-                return;
-            }
-            
-            updateStats(data);
+            // Update trades list
             updateTradesList(data.trades || []);
             
-            if (data.timestamp) {
-                const date = new Date(data.timestamp * 1000);
-                document.getElementById('lastUpdate').textContent = 
-                    date.toLocaleTimeString('id-ID', { hour12: false });
-            }
+            // Update chart
+            generateChartData(data.symbol, data.current_price);
             
-            if (symbol !== 'ALL') {
-                updateChartForSymbol(symbol, data);
-            } else {
-                if (chart && candlestickSeries) {
-                    document.getElementById('chartTitle').innerHTML = 
-                        '<i class="fas fa-chart-candlestick"></i> <span>📊 ALL INSTRUMENTS - Portfolio Overview</span>';
-                    candlestickSeries.setData([]);
-                }
-            }
-        }
-
-        function updateStats(data) {
-            const equity = parseFloat(data.equity) || 0;
-            const balance = parseFloat(data.balance) || 0;
-            const profit = parseFloat(data.profit) || 0;
-            const profitPips = parseFloat(data.total_profit_pips) || 0;
-            const mlConfidence = parseFloat(data.ml_confidence) || 0;
-            const mlTrained = parseInt(data.ml_trained) || 0;
-            const openTrades = parseInt(data.open_trades) || 0;
-            
-            document.getElementById('equity').textContent = `$${equity.toFixed(2)}`;
-            document.getElementById('equity').className = `stat-value ${equity >= balance ? 'positive' : 'negative'}`;
-            
-            const equityChange = equity - balance;
-            const equityIcon = equityChange >= 0 ? 'fa-arrow-up' : 'fa-arrow-down';
-            document.getElementById('equityChange').innerHTML = 
-                `<i class="fas ${equityIcon}"></i> $${Math.abs(equityChange).toFixed(2)}`;
-            
-            document.getElementById('balance').textContent = `$${balance.toFixed(2)}`;
-            
-            document.getElementById('profit').textContent = `$${profit.toFixed(2)}`;
-            document.getElementById('profit').className = `stat-value ${profit >= 0 ? 'positive' : 'negative'}`;
-            document.getElementById('profitPips').innerHTML = 
-                `<i class="fas fa-arrows-alt-h"></i> ${profitPips.toFixed(1)} pips`;
-            
-            document.getElementById('openTrades').textContent = openTrades;
-            
-            document.getElementById('mlConfidence').textContent = `${mlConfidence.toFixed(1)}%`;
-            document.getElementById('mlConfidence').className = `stat-value ${mlConfidence >= 60 ? 'positive' : mlConfidence >= 40 ? 'neutral' : 'negative'}`;
-            document.getElementById('mlTrained').innerHTML = 
-                `<i class="fas fa-graduation-cap"></i> Trained: ${mlTrained}x`;
+            // Update timestamp
+            const now = new Date();
+            document.getElementById('lastUpdate').textContent = now.toLocaleTimeString();
         }
         
-        // =================== TRADES LIST (FIXED PIPS WITH CORRECT PRECISION) ===================
+        // Update Trades List
         function updateTradesList(trades) {
             const list = document.getElementById('tradesList');
-            
-            if (!trades || !Array.isArray(trades)) {
-                trades = [];
-            }
+            document.getElementById('tradeCount').textContent = trades.length;
             
             if (trades.length === 0) {
                 list.innerHTML = `
-                    <div class="no-trades">
-                        <i class="fas fa-box-open" style="font-size: 24px; margin-bottom: 10px;"></i><br>
-                        No active trades found
+                    <div style="text-align: center; color: #8b92b0; padding: 40px;">
+                        <i class="fas fa-box-open" style="font-size: 48px; margin-bottom: 10px;"></i><br>
+                        No active trades
                     </div>
                 `;
-                document.getElementById('tradeCount').textContent = '(0 trades)';
                 return;
             }
             
-            try {
-                trades.sort((a, b) => {
-                    const profitA = parseFloat(a.profit_usd || a.profit || 0);
-                    const profitB = parseFloat(b.profit_usd || b.profit || 0);
-                    return profitB - profitA;
-                });
+            list.innerHTML = '';
+            
+            trades.forEach(trade => {
+                const profitUsd = parseFloat(trade.profit || 0);
+                const tradeType = trade.type.toUpperCase();
+                const profitClass = profitUsd >= 0 ? 'positive' : 'negative';
                 
-                document.getElementById('tradeCount').textContent = `(${trades.length} trades)`;
-                
-                list.innerHTML = '';
-                
-                trades.forEach(trade => {
-                    const profitUsd = parseFloat(trade.profit_usd || trade.profit || 0);
-                    const symbol = trade.symbol || currentSymbol;
-                    
-                    // PERBAIKAN: Calculate pips dengan precision yang benar
-                    let profitPips = parseFloat(trade.profit_pips || 0);
-                    
-                    if (profitPips === 0 && trade.open_price && trade.current_price) {
-                        const openPrice = parseFloat(trade.open_price);
-                        const currentPrice = parseFloat(trade.current_price);
-                        const tradeType = (trade.type || 'BUY').toUpperCase();
-                        
-                        // Use correct calculation based on instrument
-                        profitPips = calculatePips(openPrice, currentPrice, symbol, tradeType);
-                    }
-                    
-                    const tradeType = (trade.type || 'BUY').toUpperCase();
-                    const profitClass = profitUsd >= 0 ? 'positive' : 'negative';
-                    const typeClass = tradeType.toLowerCase();
-                    
-                    // Format prices with correct precision
-                    const openPrice = formatPrice(parseFloat(trade.open_price || 0), symbol);
-                    const currentPrice = formatPrice(parseFloat(trade.current_price || 0), symbol);
-                    const sl = trade.sl && trade.sl != '0' ? formatPrice(parseFloat(trade.sl), symbol) : '—';
-                    const tp = trade.tp && trade.tp != '0' ? formatPrice(parseFloat(trade.tp), symbol) : '—';
-                    
-                    const item = document.createElement('div');
-                    item.className = `trade-item ${typeClass}`;
-                    item.innerHTML = `
-                        <div class="trade-type ${typeClass}">${tradeType}</div>
-                        <div class="trade-details">
-                            <div class="main">#${trade.ticket || 'N/A'} | ${trade.lots || '0'} lots | ${symbol}</div>
-                            <div class="sub">
-                                <span>Entry: ${openPrice}</span>
-                                <span>Current: ${currentPrice}</span>
-                                <span>SL: ${sl}</span>
-                                <span>TP: ${tp}</span>
-                            </div>
+                const item = document.createElement('div');
+                item.className = `trade-item ${tradeType.toLowerCase()}`;
+                item.innerHTML = `
+                    <div>
+                        <span class="trade-type ${tradeType.toLowerCase()}">${tradeType}</span>
+                        <div style="margin-top: 8px; font-size: 13px;">
+                            <strong>${trade.lots} lots</strong> | 
+                            Open: ${trade.open_price} | 
+                            Current: ${trade.current_price}
                         </div>
-                        <div class="trade-profit ${profitClass}">
-                            <div class="pips">${profitPips >= 0 ? '+' : ''}${profitPips.toFixed(1)} pips</div>
-                            <div class="usd">${profitUsd >= 0 ? '+' : ''}$${Math.abs(profitUsd).toFixed(2)}</div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div style="font-size: 18px; font-weight: 700;" class="${profitClass}">
+                            ${profitUsd >= 0 ? '+' : ''}$${Math.abs(profitUsd).toFixed(2)}
                         </div>
-                    `;
-                    list.appendChild(item);
-                });
-                
-            } catch (error) {
-                console.error('Error updating trades list:', error);
-                list.innerHTML = `
-                    <div class="no-trades">
-                        <i class="fas fa-exclamation-triangle" style="color: #f59e0b; font-size: 24px; margin-bottom: 10px;"></i><br>
-                        Error loading trades<br>
-                        <small style="color: #8b92b0;">${error.message}</small>
+                        <div style="font-size: 12px; color: #8b92b0;">
+                            ${trade.comment || ''}
+                        </div>
                     </div>
                 `;
-                document.getElementById('tradeCount').textContent = '(error)';
-            }
-        }
-        
-        // =================== CONNECTION STATUS ===================
-        function updateConnectionStatus(connected, errorMsg = '') {
-            const statusBadge = document.getElementById('statusBadge');
-            const connectionStatus = document.getElementById('connectionStatus');
-            
-            if (connected) {
-                statusBadge.innerHTML = '<i class="fas fa-check-circle"></i> ONLINE';
-                statusBadge.className = 'status-badge online';
-                connectionStatus.textContent = 'ONLINE';
-                connectionStatus.className = 'stat-value positive';
-                isConnected = true;
-                consecutiveErrors = 0;
-                
-                if (!connectionStart) connectionStart = Date.now();
-                
-            } else {
-                consecutiveErrors++;
-                statusBadge.innerHTML = consecutiveErrors > 3 ? 
-                    '<i class="fas fa-times-circle"></i> OFFLINE' : 
-                    '<i class="fas fa-sync-alt fa-spin"></i> RECONNECTING...';
-                
-                statusBadge.className = 'status-badge ' + (consecutiveErrors > 3 ? 'offline' : 'connecting');
-                connectionStatus.textContent = consecutiveErrors > 3 ? 'OFFLINE' : 'RETRY';
-                connectionStatus.className = 'stat-value ' + (consecutiveErrors > 3 ? 'negative' : 'neutral');
-                isConnected = false;
-                
-                if (errorMsg) {
-                    logDebug(`Connection error: ${errorMsg}`, 'warning');
-                }
-            }
-            
-            if (connectionStart) {
-                const uptime = Math.floor((Date.now() - connectionStart) / 1000);
-                const hours = Math.floor(uptime / 3600);
-                const minutes = Math.floor((uptime % 3600) / 60);
-                const seconds = uptime % 60;
-                let uptimeText = '';
-                
-                if (hours > 0) uptimeText += hours + 'h ';
-                if (minutes > 0 || hours > 0) uptimeText += minutes + 'm ';
-                uptimeText += seconds + 's';
-                
-                document.getElementById('connectionUptime').innerHTML = 
-                    `<i class="fas fa-clock"></i> Uptime: ${uptimeText}`;
-                document.getElementById('uptimeFooter').textContent = uptimeText;
-            }
-        }
-        
-        // =================== UTILITY FUNCTIONS ===================
-        function getBasePriceForSymbol(symbol) {
-            const basePrices = {
-                'XAUUSD': 2650.00, 'EURUSD': 1.0800, 'GBPUSD': 1.2700,
-                'USDJPY': 151.50, 'AUDUSD': 0.6500, 'USDCHF': 0.8800,
-                'BTCUSD': 98000.00, 'ETHUSD': 3400.00, 'US30': 43500.00,
-                'NAS100': 19500.00, 'SPX500': 5950.00, 'TEST': 100.00
-            };
-            return basePrices[symbol] || 100.00;
-        }
-        
-        function aggregateAllData() {
-            let total = {
-                equity: 0, balance: 0, profit: 0, total_profit_pips: 0,
-                open_trades: 0, trades: [], timestamp: 0, ml_confidence: 0,
-                ml_trained: 0, current_price: null, bid_price: null, ask_price: null,
-                spread: null, symbol: 'ALL'
-            };
-            
-            if (Object.keys(allData).length === 0) return total;
-            
-            Object.values(allData).forEach(d => {
-                total.equity += parseFloat(d.equity) || 0;
-                total.balance += parseFloat(d.balance) || 0;
-                total.profit += parseFloat(d.profit) || 0;
-                total.total_profit_pips += parseFloat(d.total_profit_pips) || 0;
-                total.open_trades += parseInt(d.open_trades) || 0;
-                
-                if (d.trades && Array.isArray(d.trades)) {
-                    total.trades = total.trades.concat(d.trades);
-                }
-                
-                if (d.timestamp > total.timestamp) {
-                    total.timestamp = d.timestamp;
-                }
+                list.appendChild(item);
             });
+        }
+        
+        // Generate Chart Data
+        function generateChartData(symbol, currentPrice) {
+            if (!currentPrice || currentPrice === 0) return;
             
-            if (Object.keys(allData).length > 0) {
-                total.ml_confidence = Object.values(allData).reduce((sum, d) => 
-                    sum + (parseFloat(d.ml_confidence) || 0), 0) / Object.keys(allData).length;
-                total.ml_trained = Object.values(allData).reduce((sum, d) => 
-                    sum + (parseInt(d.ml_trained) || 0), 0);
+            const data = [];
+            const now = Math.floor(Date.now() / 1000);
+            let price = currentPrice;
+            
+            // Generate 100 candles
+            for (let i = 99; i >= 0; i--) {
+                const time = now - (i * 60); // 1 minute candles
+                const change = (Math.random() - 0.5) * 0.002;
+                const newPrice = price * (1 + change);
+                
+                const open = price;
+                const close = newPrice;
+                const high = Math.max(open, close) * (1 + Math.random() * 0.001);
+                const low = Math.min(open, close) * (1 - Math.random() * 0.001);
+                
+                data.push({
+                    time: time,
+                    open: open,
+                    high: high,
+                    low: low,
+                    close: close
+                });
+                
+                price = close;
             }
             
-            return total;
+            // Set last candle to current price
+            data[data.length - 1].close = currentPrice;
+            data[data.length - 1].high = Math.max(data[data.length - 1].high, currentPrice);
+            data[data.length - 1].low = Math.min(data[data.length - 1].low, currentPrice);
+            
+            candlestickSeries.setData(data);
+            chart.timeScale().fitContent();
         }
         
-        function getTimeframeLabel(tf) {
-            const labels = {
-                '1': '1 Minute', '5': '5 Minutes', '15': '15 Minutes',
-                '60': '1 Hour', '240': '4 Hours', 'D': '1 Day'
-            };
-            return labels[tf] || `${tf} Minute${tf !== '1' ? 's' : ''}`;
+        // Update Status
+        function updateStatus(online) {
+            const badge = document.getElementById('statusBadge');
+            const status = document.getElementById('connectionStatus');
+            
+            if (online) {
+                badge.innerHTML = '<i class="fas fa-check-circle"></i> ONLINE';
+                badge.className = 'status-badge online';
+                status.textContent = 'ONLINE';
+                status.className = 'stat-value positive';
+            } else {
+                badge.innerHTML = '<i class="fas fa-times-circle"></i> OFFLINE';
+                badge.className = 'status-badge offline';
+                status.textContent = 'OFFLINE';
+                status.className = 'stat-value negative';
+            }
         }
         
-        // =================== INITIALIZE APP ===================
-        document.addEventListener('DOMContentLoaded', initApplication);
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            initChart();
+            fetchTradeData();
+            
+            // Auto refresh every 5 seconds
+            setInterval(fetchTradeData, 5000);
+        });
     </script>
 </body>
 </html>

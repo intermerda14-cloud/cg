@@ -1,5 +1,9 @@
 {
   "version": 2,
+  "buildCommand": null,
+  "devCommand": null,
+  "installCommand": "npm install",
+  "framework": null,
   "builds": [
     {
       "src": "index.html",
@@ -12,15 +16,15 @@
   ],
   "routes": [
     {
-      "src": "/api/get_trades",
+      "src": "/api/get_trades.js",
       "dest": "/api/get_trades.js"
     },
     {
-      "src": "/api/update_trade",
+      "src": "/api/update_trade.js",
       "dest": "/api/update_trade.js"
     },
     {
-      "src": "/api/ml_train",
+      "src": "/api/ml_train.js",
       "dest": "/api/ml_train.js"
     },
     {

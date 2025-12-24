@@ -12,7 +12,6 @@ async function connectToDatabase() {
   const client = await MongoClient.connect(MONGODB_URI, {
     maxPoolSize: 10,
     serverSelectionTimeoutMS: 5000,
-    socketTimeoutMS: 5000,
   });
   
   cachedClient = client;
@@ -22,22 +21,27 @@ async function connectToDatabase() {
 }
 
 export default async function handler(req, res) {
-  // Set headers immediately
+  // CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   res.setHeader('Content-Type', 'application/json');
-  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
   
-  if (req.method === 'OPTIONS') return res.status(200).end();
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
   
   if (req.method !== 'GET') {
-    return res.status(405).json({ error: 'Method not allowed' });
+    return res.status(405).json({ 
+      error: 'Method not allowed',
+      message: 'This endpoint only accepts GET requests'
+    });
   }
   
   try {
     const { db } = await connectToDatabase();
     const collection = db.collection('trades');
     
-    // Get symbol from query (optional)
     const symbol = req.query.symbol || null;
     
     let query = {};
@@ -45,28 +49,28 @@ export default async function handler(req, res) {
       query = { symbol: symbol };
     }
     
-    // Get latest trade with timeout
+    // Get latest trade
     const latest = await collection
       .findOne(query, { 
-        sort: { updated_at: -1 },
-        maxTimeMS: 3000 
+        sort: { updated_at: -1 }
       });
     
     if (!latest) {
       return res.status(200).json({
         status: 'no_data',
-        message: 'No trades found in database',
+        message: 'No trades found. EA may not have sent data yet.',
         latest: null,
+        trades: [],
+        count: 0,
         timestamp: Math.floor(Date.now() / 1000)
       });
     }
     
-    // Get recent trades (limit 10)
+    // Get recent trades
     const trades = await collection
       .find(query)
       .sort({ updated_at: -1 })
       .limit(10)
-      .maxTimeMS(3000)
       .toArray();
     
     return res.status(200).json({
@@ -78,24 +82,12 @@ export default async function handler(req, res) {
     });
     
   } catch (error) {
-    console.error('GET API Error:', error);
+    console.error('GET Trades Error:', error);
     
-    // Return mock data if MongoDB fails
-    return res.status(200).json({
+    return res.status(500).json({
       status: 'error',
       message: error.message,
-      latest: {
-        symbol: 'BTCUSD',
-        equity: 0,
-        balance: 0,
-        profit: 0,
-        open_trades: 0,
-        ml_confidence: 0,
-        ml_trained: 0,
-        current_price: 0,
-        trades: []
-      },
-      timestamp: Math.floor(Date.now() / 1000)
+      error: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
   }
 }

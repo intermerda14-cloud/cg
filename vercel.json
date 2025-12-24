@@ -12,13 +12,15 @@
   ],
   "routes": [
     {
+      "src": "/api/get_trades",
+      "dest": "/api/get_trades.js"
+    },
+    {
       "src": "/api/update_trade",
-      "methods": ["POST", "OPTIONS"],
       "dest": "/api/update_trade.js"
     },
     {
       "src": "/api/ml_train",
-      "methods": ["POST", "OPTIONS"],
       "dest": "/api/ml_train.js"
     },
     {
@@ -27,7 +29,7 @@
     },
     {
       "src": "/(.*)",
-      "dest": "/index.html"
+      "dest": "/$1"
     }
   ],
   "headers": [

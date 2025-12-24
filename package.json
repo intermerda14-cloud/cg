@@ -1,9 +1,10 @@
 {
   "name": "bb-grid-v5-monitor",
   "version": "5.0.0",
-  "description": "BB Grid V5 Trading Monitor with ML",
+  "type": "module",
+  "description": "BB Grid V5 Trading Monitor",
   "scripts": {
-    "build": "mkdir -p public && cp index.html public/"
+    "build": "echo 'Static site - no build needed'"
   },
   "dependencies": {
     "mongodb": "^6.3.0"
